@@ -1,0 +1,36 @@
+name: debian_bridge
+version: "1.0"
+author: Fedorenko V.V. <fedorenko22116@gmail.com>
+about: Bridge to run .deb packages on your distribution using docker
+args:
+  - config:
+      short: c
+      long: config
+      value_name: FILE
+      help: Sets a custom config file
+      takes_value: true
+  - verbose:
+      short: v
+      multiple: true
+      help: Sets the level of verbosity
+subcommands:
+  - run:
+      about: Run installed program
+  - list:
+      about: Show installed programs with their containers
+  - test:
+      about: Test compatibility and feature access
+  - create:
+      about: Create new docker build for existed package
+      args:
+        - package:
+            required: true
+            index: 1
+            help: path to .deb package
+  - remove:
+      about: Remove program, container, build
+      args:
+        - name:
+            required: true
+            index: 1
+            help: Program or container name
