@@ -11,28 +11,29 @@ fn main() {
         .setting(AppSettings::ArgRequiredElseHelp)
         .get_matches();
 
-//    let config = matches.value_of("config").unwrap_or("default.conf");
-
-//    println!("Value for config: {}", config);
-//    println!("Using input file: {}", matches.value_of("INPUT").unwrap());
-
-    let logger = match matches.occurrences_of("v") {
+    pretty_env_logger::init_custom_env(match matches.occurrences_of("v") {
         0 => "error",
         1 => "warn",
         2 => "info",
         3 => "debug",
         4 | _ => "trace",
-    };
+    });
 
-    pretty_env_logger::init_custom_env(logger);
+    match matches.subcommand_name() {
+        Some("test") => {
 
-    if let Some(matches) = matches.subcommand_matches("test") {
-        if matches.is_present("debug") {
-            println!("Printing debug info...");
-        } else {
-            println!("Printing normally...");
         }
+        Some("create") => {
 
-        return;
+        }
+        Some("remove") => {
+
+        }
+        Some("list") => {
+
+        }
+        _ => {
+            error!("Command doesn't exist");
+        }
     }
 }
