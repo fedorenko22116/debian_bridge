@@ -19,6 +19,9 @@ fn main() -> Result<(), Box<dyn Error>> {
     let matches = App::from_yaml(yaml)
         .setting(AppSettings::ArgRequiredElseHelp)
         .setting(AppSettings::SubcommandRequiredElseHelp)
+        .name(env!("CARGO_PKG_NAME"))
+        .author(env!("CARGO_PKG_AUTHORS"))
+        .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
 
     pretty_env_logger::init_custom_env(match matches.occurrences_of("v") {
@@ -31,8 +34,6 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let config_path = xdg::BaseDirectories::with_prefix(env!("CARGO_PKG_NAME"))?
         .place_config_file("config.json")?;
-
-    println!("{:?}", config_path);
 
     let docker = shiplift::Docker::new();
     let config = Config::new(&vec![
@@ -59,12 +60,10 @@ fn main() -> Result<(), Box<dyn Error>> {
             app.config.serialize(&config_path)
         }
         Some("list") => {
-            app.list()?;
-            Ok(())
+            app.list()
         }
         Some("rpc") => {
-            app.rpc(&IpAddr::from_str("127.0.0.1")?, &8080u16)?;
-            Ok(())
+            app.rpc(&IpAddr::from_str("127.0.0.1")?, &8080u16)
         }
         _ => {
             Err("Command doesn't exist".into())
