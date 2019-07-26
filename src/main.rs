@@ -47,7 +47,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     match matches.subcommand_name() {
         Some("test") => {
             let system = System::try_new(&docker)?;
-            println!("System settings: {:?}", system.wm);
+            println!("System settings: {}", system);
             Ok(())
         }
         Some("create") => {
