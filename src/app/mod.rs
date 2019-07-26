@@ -1,8 +1,6 @@
 mod config;
-mod program;
 
-pub use program::*;
-pub use config::Config;
+pub use config::{Config, Program, Feature};
 use std::path::Path;
 use std::net::IpAddr;
 use shiplift::Docker;

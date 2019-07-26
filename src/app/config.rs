@@ -1,6 +1,7 @@
 use std::path::Path;
-use super::program::Program;
 use std::error::Error;
+use std::path::PathBuf;
+use std::str::FromStr;
 
 #[derive(Clone)]
 pub struct Config {
@@ -21,25 +22,26 @@ impl Config {
     }
 }
 
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn should_serialize_success() {
-        assert!(true)
-    }
+#[derive(Clone)]
+pub enum Feature {
+    Display,
+    Sound,
+    Notification,
+    Webcam,
+    Printer,
+    HomePersistent,
+}
 
-    #[test]
-    fn should_serialize_failed() {
-        assert!(true)
-    }
+#[derive(Clone)]
+pub struct Program {
+    pub path: PathBuf,
+    pub settings: Vec<Feature>,
+}
 
-    #[test]
-    fn should_deserialize_success() {
-        assert!(true)
-    }
+impl FromStr for Program {
+    type Err = Box<dyn Error>;
 
-    #[test]
-    fn should_deserialize_failed() {
-        assert!(true)
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        unimplemented!()
     }
 }
