@@ -1,6 +1,7 @@
 extern crate shiplift;
 extern crate tokio;
 extern crate colorful;
+extern crate serde_json;
 
 mod app;
 pub mod sys;

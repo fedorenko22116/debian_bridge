@@ -39,14 +39,3 @@ subcommands:
             index: 1
             help: Program or container name
 
-  - rpc:
-      about: Starts RPC server
-      args:
-        - host:
-            required: true
-            index: 1
-            help: Server host i.e. 127.0.0.1
-        - ip:
-            required: true
-            index: 2
-            help: Port

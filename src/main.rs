@@ -36,37 +36,28 @@ fn main() -> Result<(), Box<dyn Error>> {
         .place_config_file("config.json")?;
 
     let docker = shiplift::Docker::new();
-    let config = Config::new(&vec![
-        Program {
-            settings: vec![Feature::Display],
-            path: Path::new("./").to_owned(),
-        }
-    ]);
-    let app = Wrapper::new(&config, &docker);
+    let config = Config::deserialize(config_path.as_path())?;
+    let system = System::try_new(&docker)?;
+    let app = Wrapper::new(&config, &system, &docker);
 
     match matches.subcommand_name() {
         Some("test") => {
-            let system = System::try_new(&docker)?;
             println!("System settings: {}", system);
-            Ok(())
         }
         Some("create") => {
             let system = System::try_new(&docker);
             app.create(Path::new("./pcg.deb"))?;
-            app.config.serialize(&config_path)
         }
         Some("remove") => {
-            app.remove(&Program::from_str("qwe")?)?;
-            app.config.serialize(&config_path)
+            app.remove("some_program")?
         }
         Some("list") => {
-            app.list()
-        }
-        Some("rpc") => {
-            app.rpc(&IpAddr::from_str("127.0.0.1")?, &8080u16)
+            app.list()?
         }
         _ => {
-            Err("Command doesn't exist".into())
+            unreachable!()
         }
     }
+
+    app.save(&config_path)
 }

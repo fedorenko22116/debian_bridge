@@ -1,6 +1,6 @@
 use std::fmt::{Display, Formatter, Result};
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum WindowManager {
     X11,
     Wayland
@@ -19,7 +19,7 @@ impl Display for WindowManager {
 
 impl Driver for WindowManager { }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum SoundDriver {
     Alsa,
     PulseAudio,
@@ -38,7 +38,7 @@ impl Display for SoundDriver {
 
 impl Driver for SoundDriver { }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum PrinterDriver {
     Default
 }
@@ -51,7 +51,7 @@ impl Display for PrinterDriver {
 
 impl Driver for PrinterDriver { }
 
-#[derive(Copy, Clone)]
+#[derive(Clone)]
 pub enum WebCamDriver {
     Default
 }
@@ -64,17 +64,15 @@ impl Display for WebCamDriver {
 
 impl Driver for WebCamDriver { }
 
-#[derive(Copy, Clone)]
-pub enum DockerVersion {
-    Default
-}
+#[derive(Clone)]
+pub struct DockerVersion(pub String);
 
 impl Display for DockerVersion {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", "Default driver installed")
+        write!(f, "{}", self.0)
     }
 }
 
 impl Driver for DockerVersion { }
 
-pub trait Driver : Display + Copy + Clone { }
+pub trait Driver : Display + Clone { }

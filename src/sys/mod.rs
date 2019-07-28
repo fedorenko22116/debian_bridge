@@ -15,12 +15,13 @@ use colorful::Colorful;
 
 type SystemResult<T> = Result<T, SystemError>;
 
+#[derive(Clone)]
 pub struct System {
-    pub wm: Option<WindowManager>,
-    pub sd: Option<SoundDriver>,
-    pub pd: Option<PrinterDriver>,
-    pub wcm: Option<WebCamDriver>,
-    pub docker_version: DockerVersion,
+    wm: Option<WindowManager>,
+    sd: Option<SoundDriver>,
+    pd: Option<PrinterDriver>,
+    wcm: Option<WebCamDriver>,
+    docker_version: DockerVersion,
 }
 
 impl System {
@@ -41,7 +42,7 @@ impl System {
         let mut rt = Runtime::new().unwrap();
 
         let result = match rt.block_on(version) {
-            Ok(Version { api_version: v, .. }) => Ok(DockerVersion::Default),
+            Ok(Version { api_version: v, .. }) => Ok(DockerVersion(v.to_owned())),
             Err(err) => Err(SystemError::DockerConnection)
         };
 
@@ -117,7 +118,7 @@ impl Display for System {
                 \tPrinter driver ===> {printer_driver}\n\
                 \tWebcam driver  ===> {webcam_driver}\n\
             ",
-                docker_version = DisplayOption(Some(self.docker_version)),
+                docker_version = DisplayOption(Some(self.docker_version.to_owned())),
                 window_manager = DisplayOption(self.wm.to_owned()),
                 sound_driver = DisplayOption(self.sd.to_owned()),
                 printer_driver = DisplayOption(self.pd.to_owned()),
