@@ -6,11 +6,12 @@ use std::fs::File;
 use std::io::BufReader;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
+use std::fmt::Display;
 
 type AppResult<T> = Result<T, AppError>;
 
 
-#[derive(Clone, Serialize, Deserialize)]
+#[derive(Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub enum Feature {
     Display,
     Sound,
@@ -18,6 +19,21 @@ pub enum Feature {
     Webcam,
     Printer,
     HomePersistent,
+    Shortcut,
+}
+
+impl Display for Feature {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
+        write!(f, "{}", match self {
+            Feature::Display => "Display",
+            Feature::Sound => "Sound",
+            Feature::Notification => "Notification",
+            Feature::Webcam => "Webcam",
+            Feature::Printer => "Printer",
+            Feature::Shortcut => "Shortcut",
+            Feature::HomePersistent => "Home persistent",
+        })
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -94,7 +110,8 @@ impl Config {
         Ok(self)
     }
 
-    pub fn clear(&mut self) {
+    pub fn clear(&mut self) -> &Self {
         self.programs = vec![];
+        self
     }
 }

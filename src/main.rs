@@ -43,20 +43,21 @@ fn main() -> Result<(), Box<dyn Error>> {
     match matches.subcommand_name() {
         Some("test") => {
             println!("System settings: {}", system);
-        }
+            println!("Available features: {}", app.features);
+        },
         Some("create") => {
             let system = System::try_new(&docker);
-            app.create(Path::new("./pcg.deb"))?;
-        }
+            app.create(Path::new("./pcg.deb"))?
+        },
         Some("remove") => {
             app.remove("some_program")?
-        }
+        },
         Some("list") => {
             app.list()?
-        }
+        },
         _ => {
             unreachable!()
-        }
+        },
     }
 
     app.save(&config_path)

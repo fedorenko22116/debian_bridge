@@ -17,11 +17,11 @@ type SystemResult<T> = Result<T, SystemError>;
 
 #[derive(Clone)]
 pub struct System {
-    wm: Option<WindowManager>,
-    sd: Option<SoundDriver>,
-    pd: Option<PrinterDriver>,
-    wcm: Option<WebCamDriver>,
-    docker_version: DockerVersion,
+    pub wm: Option<WindowManager>,
+    pub sd: Option<SoundDriver>,
+    pub pd: Option<PrinterDriver>,
+    pub wcm: Option<WebCamDriver>,
+    pub docker_version: DockerVersion,
 }
 
 impl System {
