@@ -38,7 +38,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     let docker = shiplift::Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
-    let app = Wrapper::new(&config, &system, &docker);
+    let mut app = Wrapper::new(&config, &system, &docker);
 
     match matches.subcommand_name() {
         Some("test") => {
@@ -50,10 +50,20 @@ fn main() -> Result<(), Box<dyn Error>> {
             app.create(Path::new("./pcg.deb"))?
         },
         Some("remove") => {
-            app.remove("some_program")?
+            app.remove(
+                matches
+                    .subcommand_matches("remove").unwrap()
+                    .value_of(&"name").unwrap()
+            )?;
+            println!("Program successfuly removed");
         },
         Some("list") => {
-            app.list()?
+            let list = app.list().join(", ");
+
+            match list.as_str() {
+                "" => println!("No program added yet"),
+                list => println!("Available programs list: {}", list)
+            }
         },
         _ => {
             unreachable!()

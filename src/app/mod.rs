@@ -2,7 +2,7 @@ mod config;
 pub mod error;
 
 pub use config::{Config, Program, Feature};
-use crate::System;
+use tokio::{prelude::Future, runtime::Runtime};
 use std::path::Path;
 use std::net::IpAddr;
 use shiplift::Docker;
@@ -12,6 +12,7 @@ use std::fmt::{Display, Formatter};
 use colorful::Color;
 use colorful::Colorful;
 use crate::sys::driver::Driver;
+use crate::System;
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
@@ -49,12 +50,28 @@ pub struct App {
 }
 
 impl App {
-    pub fn list(&self) -> Result<(), Box<dyn Error>> {
-        unimplemented!()
+    pub fn list(&self) -> Vec<String> {
+        self.config.programs.iter()
+            .map(|program| (&program) .name.to_owned())
+            .collect::<Vec<String>>()
+            .to_vec()
     }
 
-    pub fn remove(&self, program: &str) -> Result<(), Box<dyn Error>> {
-        unimplemented!()
+    pub fn remove(&mut self, program: &str) -> Result<&Self, Box<dyn Error>> {
+        let fut = self.docker
+            .images()
+            .get(&program)
+            .delete();
+        let mut rt = Runtime::new().unwrap();
+
+        rt.block_on(fut)?;
+        rt.shutdown_now().wait();
+
+        self.config.remove(
+            &program.to_string()
+        )?;
+
+        Ok(self)
     }
 
     pub fn create(&self, path: &Path) -> Result<(), Box<dyn Error>> {

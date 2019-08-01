@@ -45,7 +45,7 @@ pub struct Program {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Config {
-    programs: Vec<Program>,
+    pub programs: Vec<Program>,
 }
 
 impl Config {
