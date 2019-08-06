@@ -20,6 +20,7 @@ use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use crate::sys::driver::Driver;
 use crate::System;
 use crate::app::deb::Deb;
+use crate::app::error::AppError;
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
@@ -71,24 +72,26 @@ pub struct App {
 impl App {
     pub fn list(&self) -> Vec<String> {
         self.config.programs.iter()
-            .map(|program| (&program).get_name(&self.prefix).to_owned())
+            .map(|program| (&program).get_name_short().to_owned())
             .collect::<Vec<String>>()
             .to_vec()
     }
 
     pub fn remove(&mut self, program: &str) -> Result<&Self, Box<dyn Error>> {
+        let program = match self.config.find(program) {
+            Some(p) => p,
+            None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
+        };
         let fut = self.docker
             .images()
-            .get(&program)
+            .get(&program.0.get_name(&self.prefix))
             .delete();
         let mut rt = Runtime::new().unwrap();
 
         rt.block_on(fut)?;
         rt.shutdown_now().wait();
 
-        self.config.remove(
-            &program.to_string()
-        )?;
+        self.config.remove(&program.0)?;
 
         Ok(self)
     }
@@ -106,16 +109,14 @@ impl App {
 
         std::fs::write(&dockerfile_path, dockerfile)?;
 
-        let build_tag = format!("{}_{}", self.prefix, deb.package);
-
-        self.config.push(&Program::new(&build_tag, &app_path, &settings, &icon))?;
+        self.config.push(&Program::new(&deb.package, &app_path, &settings, &icon))?;
 
         let fut = self.docker
             .images()
             .build(
                 &BuildOptions::builder(
                     self.cache_path.as_os_str().to_str().unwrap()
-                ).tag(&build_tag).build()
+                ).tag(&format!("{}_{}", self.prefix, deb.package)).build()
             )
             .for_each(|output| {
                 println!("{}", output);

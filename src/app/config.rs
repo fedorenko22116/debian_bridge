@@ -64,6 +64,10 @@ impl Program {
         format!("{}_{}", prefix, self.name)
     }
 
+    pub fn get_name_short(&self) -> String {
+        self.name.to_owned()
+    }
+
     pub fn new<T: Into<String>>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>) -> Self {
         Program {
             name: name.into(),
@@ -131,11 +135,17 @@ impl Config {
         Ok(self)
     }
 
-    pub fn remove(&mut self, name: &String) -> AppResult<&Self> {
-        let program_idx = match self.programs.iter().position(|x| x.name == *name) {
-            Some(elem) => elem,
+    pub fn find<T: Into<String>>(&self, name: T) -> Option<(Program, usize)> {
+        let name = name.into();
+        let idx = self.programs.iter().position(|x| x.name == name)?;
+        self.programs.get(idx).map(|p| (p.to_owned(), idx))
+    }
+
+    pub fn remove(&mut self, program: &Program) -> AppResult<&Self> {
+        let program_idx = match self.find(&program.name) {
+            Some(elem) => elem.1,
             None => return Err(
-                AppError::Program(format!("Can't find a program '{}'", name).to_string())
+                AppError::Program(format!("Can't find a program '{}'", program.name).to_string())
             ),
         };
 
