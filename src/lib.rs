@@ -1,4 +1,4 @@
-#[macro_use] extern crate log;
+#[macro_use] pub extern crate log;
 extern crate shiplift;
 extern crate tokio;
 extern crate colorful;

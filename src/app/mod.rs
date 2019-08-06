@@ -1,6 +1,6 @@
+pub mod error;
 mod config;
 mod deb;
-pub mod error;
 
 pub use config::{Config, Program, Feature, Icon};
 use tokio::{prelude::Future, runtime::Runtime};
@@ -104,6 +104,9 @@ impl App {
         std::fs::copy(app_path, &app_tmp_path);
 
         let mut dockerfile = gen_dockerfile(&deb);
+
+        debug!("Generated dockerfile:\n{}", dockerfile);
+
         let mut dockerfile_path = self.cache_path.to_owned();
         dockerfile_path.push(Path::new("Dockerfile"));
 
@@ -119,7 +122,7 @@ impl App {
                 ).tag(&format!("{}_{}", self.prefix, deb.package)).build()
             )
             .for_each(|output| {
-                println!("{}", output);
+                trace!("{}", output);
                 Ok(())
             })
             .map_err(|e| return e);
@@ -146,6 +149,7 @@ impl App {
 
     pub fn save(&self, path: &Path) -> Result<&Self, Box<dyn Error>> {
         self.config.serialize(path)?;
+        debug!("Config updated");
         Ok(self)
     }
 
