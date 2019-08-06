@@ -10,6 +10,24 @@ use std::fmt::Display;
 
 type AppResult<T> = Result<T, AppError>;
 
+#[derive(Clone, Serialize, Deserialize)]
+pub struct Icon {
+    img: PathBuf,
+    mime: String
+}
+
+impl Icon {
+    pub fn new() -> Self {
+        unimplemented!()
+    }
+}
+
+impl Default for Icon {
+    fn default() -> Self {
+        unimplemented!()
+    }
+}
+
 #[derive(Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub enum Feature {
     Display,
@@ -18,7 +36,6 @@ pub enum Feature {
     Webcam,
     Printer,
     HomePersistent,
-    Shortcut,
 }
 
 impl Display for Feature {
@@ -29,7 +46,6 @@ impl Display for Feature {
             Feature::Notification => "Notification",
             Feature::Webcam => "Webcam",
             Feature::Printer => "Printer",
-            Feature::Shortcut => "Shortcut",
             Feature::HomePersistent => "Home persistent",
         })
     }
@@ -40,11 +56,21 @@ pub struct Program {
     name: String,
     pub path: PathBuf,
     pub settings: Vec<Feature>,
+    pub icon: Option<Icon>,
 }
 
 impl Program {
     pub fn get_name(&self, prefix: &String) -> String {
         format!("{}_{}", prefix, self.name)
+    }
+
+    pub fn new<T: Into<String>>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>) -> Self {
+        Program {
+            name: name.into(),
+            path: path.to_owned(),
+            settings: settings.to_vec(),
+            icon: icon.to_owned(),
+        }
     }
 }
 
@@ -94,7 +120,9 @@ impl Config {
     pub fn push(&mut self, program: &Program) -> AppResult<&Self> {
         match self.programs.iter().find(|&x| x.name == program.name) {
             Some(elem) => return Err(
-                AppError::Program(format!("Program with such name already exists '{}'", program.name).to_string())
+                AppError::Program(
+                    format!("Program with such name already exists '{}'. Remove it first or use a custom tag with -t (--tag) option", program.name).to_string()
+                )
             ),
             None => (),
         };

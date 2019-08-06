@@ -8,6 +8,7 @@ extern crate dockerfile;
 extern crate xdg;
 extern crate pipers;
 extern crate regex;
+extern crate freedesktop_desktop_entry;
 
 mod app;
 mod sys;

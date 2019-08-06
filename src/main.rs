@@ -1,6 +1,6 @@
 #[macro_use] extern crate clap;
 
-use debian_bridge::{App as Wrapper, Config, Program, Feature, System};
+use debian_bridge::{App as Wrapper, Config, Program, Feature, System, Icon};
 use clap::{App, AppSettings};
 use std::path::Path;
 use std::net::IpAddr;
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 matches
                     .subcommand_matches("create").unwrap()
                     .value_of(&"package").unwrap()
-            ))?;
+            ), vec![Feature::Display], &None)?;
         },
         Some("run") => {
             app.run(
