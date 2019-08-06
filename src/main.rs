@@ -1,7 +1,4 @@
 #[macro_use] extern crate clap;
-#[macro_use] extern crate log;
-extern crate pretty_env_logger;
-extern crate xdg;
 
 use debian_bridge::{App as Wrapper, Config, Program, Feature, System};
 use clap::{App, AppSettings};
@@ -15,11 +12,12 @@ fn main() -> Result<(), Box<dyn Error>> {
         return Err("Only linux supported for now.".into());
     }
 
+    let package_name = env!("CARGO_PKG_NAME").to_owned();
     let yaml = load_yaml!("../config/cli.yaml");
     let matches = App::from_yaml(yaml)
         .setting(AppSettings::ArgRequiredElseHelp)
         .setting(AppSettings::SubcommandRequiredElseHelp)
-        .name(env!("CARGO_PKG_NAME"))
+        .name(&package_name)
         .author(env!("CARGO_PKG_AUTHORS"))
         .version(env!("CARGO_PKG_VERSION"))
         .get_matches();
@@ -32,13 +30,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         4 | _ => "trace",
     });
 
-    let config_path = xdg::BaseDirectories::with_prefix(env!("CARGO_PKG_NAME"))?
+    let config_path = xdg::BaseDirectories::with_prefix(&package_name)?
         .place_config_file("config.json")?;
+    let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?
+        .place_cache_file("")?;
 
     let docker = shiplift::Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
-    let mut app = Wrapper::new(&config, &system, &docker);
+    let mut app = Wrapper::new(&package_name, &cache_path, &config, &system, &docker);
 
     match matches.subcommand_name() {
         Some("test") => {
@@ -46,8 +46,18 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("Available features: {}", app.features);
         },
         Some("create") => {
-            let system = System::try_new(&docker);
-            app.create(Path::new("./pcg.deb"))?
+            app.create(Path::new(
+                matches
+                    .subcommand_matches("create").unwrap()
+                    .value_of(&"package").unwrap()
+            ))?;
+        },
+        Some("run") => {
+            app.run(
+                matches
+                    .subcommand_matches("run").unwrap()
+                    .value_of(&"name").unwrap()
+            )?;
         },
         Some("remove") => {
             app.remove(
@@ -70,5 +80,6 @@ fn main() -> Result<(), Box<dyn Error>> {
         },
     }
 
-    app.save(&config_path)
+    app.save(&config_path)?;
+    Ok(())
 }

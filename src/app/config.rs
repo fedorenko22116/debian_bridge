@@ -10,7 +10,6 @@ use std::fmt::Display;
 
 type AppResult<T> = Result<T, AppError>;
 
-
 #[derive(Clone, Serialize, Deserialize, Hash, Eq, PartialEq)]
 pub enum Feature {
     Display,
@@ -38,9 +37,15 @@ impl Display for Feature {
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Program {
-    pub name: String,
+    name: String,
     pub path: PathBuf,
     pub settings: Vec<Feature>,
+}
+
+impl Program {
+    pub fn get_name(&self, prefix: &String) -> String {
+        format!("{}_{}", prefix, self.name)
+    }
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -52,7 +57,7 @@ impl Config {
     pub fn deserialize(path: &Path) -> AppResult<Self> {
         if !path.exists() {
             return match File::create(path) {
-                _ => Ok(Config { programs: vec![] }),
+                Result::Ok(_) => Ok(Config { programs: vec![] }),
                 Result::Err(err) => Err(AppError::File(err.to_string()))
             }
         }

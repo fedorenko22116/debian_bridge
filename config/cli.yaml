@@ -16,6 +16,19 @@ args:
 subcommands:
   - run:
       about: Run installed program
+      args:
+        - name:
+            required: true
+            index: 1
+            help: Program name
+
+  - remove:
+      about: Remove program, container, build
+      args:
+        - name:
+            required: true
+            index: 1
+            help: Program name
 
   - list:
       about: Show installed programs with their containers
@@ -30,12 +43,3 @@ subcommands:
             required: true
             index: 1
             help: path to .deb package
-
-  - remove:
-      about: Remove program, container, build
-      args:
-        - name:
-            required: true
-            index: 1
-            help: Program or container name
-
