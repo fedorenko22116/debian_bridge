@@ -1,5 +1,6 @@
 #[macro_use] extern crate clap;
 #[macro_use] extern crate log;
+extern crate xdg;
 
 use debian_bridge::{App as Wrapper, Config, Program, Feature, System, Icon};
 use clap::{App, AppSettings};

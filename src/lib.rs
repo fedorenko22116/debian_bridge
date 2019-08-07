@@ -5,10 +5,10 @@ extern crate colorful;
 extern crate serde_json;
 extern crate pretty_env_logger;
 extern crate dockerfile;
-extern crate xdg;
 extern crate pipers;
 extern crate regex;
 extern crate freedesktop_desktop_entry;
+extern crate dirs;
 
 mod app;
 mod sys;

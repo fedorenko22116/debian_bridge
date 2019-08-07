@@ -1,6 +1,7 @@
 pub mod error;
 mod config;
 mod deb;
+mod util;
 
 pub use config::{Config, Program, Feature, Icon};
 use tokio::{prelude::Future, runtime::Runtime};
@@ -15,8 +16,6 @@ use std::ffi::OsStr;
 use colorful::Color;
 use colorful::Colorful;
 use colorful::core::StrMarker;
-use dockerfile::{Dockerfile, Arg, Copy, Cmd, Run, User, Env, Workdir};
-use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use crate::sys::driver::Driver;
 use crate::System;
 use crate::app::deb::Deb;
@@ -91,6 +90,18 @@ impl App {
         rt.block_on(fut)?;
         rt.shutdown_now().wait();
 
+        if let Some(_) = program.0.icon {
+            let mut path = dirs::desktop_dir().unwrap();
+            let name = format!("{}.desktop", program.0.get_name_short());
+
+            path.push(name);
+
+            std::fs::remove_file(path).unwrap_or_else(|err| {
+                error!("Can't remove an entry file: '{}'", err.to_string());
+                ()
+            });
+        }
+
         self.config.remove(&program.0)?;
 
         Ok(self)
@@ -103,7 +114,7 @@ impl App {
 
         std::fs::copy(app_path, &app_tmp_path);
 
-        let mut dockerfile = gen_dockerfile(&deb);
+        let mut dockerfile = util::gen_dockerfile(&deb);
 
         debug!("Generated dockerfile:\n{}", dockerfile);
 
@@ -122,7 +133,7 @@ impl App {
                 ).tag(&format!("{}_{}", self.prefix, deb.package)).build()
             )
             .for_each(|output| {
-                trace!("{}", output);
+                debug!("{}", output);
                 Ok(())
             })
             .map_err(|e| return e);
@@ -134,10 +145,19 @@ impl App {
         std::fs::remove_file(&dockerfile_path)?;
         std::fs::remove_file(&app_tmp_path)?;
 
-        //TODO: put desktop entypoint to apropriate directory
         if let Some(icon) = icon {
-            gen_desktop_entry();
-            unimplemented!()
+            let entry = util::gen_desktop_entry(&deb.package, &deb.description.unwrap_or("Application".to_string()));
+            let mut path = dirs::desktop_dir().unwrap();
+
+            debug!("Generated new entry in '{}':\n{}", path.to_str().unwrap(), entry);
+
+            if !path.exists() {
+                std::fs::create_dir(&path)?;
+            }
+
+            path.push(format!("{}.desktop", deb.package));
+
+            std::fs::write(path, entry)?;
         }
 
         Ok(self)
@@ -162,55 +182,4 @@ impl App {
             features: FeaturesList::new(&system)
         }
     }
-}
-
-fn get_user() -> String {
-    match std::env::var_os("USER") {
-        Some(os_string) =>  {
-            match os_string.as_os_str().to_str() {
-                Some(user) => user.to_str(),
-                _ => "default".to_str(),
-            }
-        },
-        _ => "default".to_str(),
-    }
-}
-
-fn gen_dockerfile(deb: &Deb) -> String {
-    let mut dockerfile = Dockerfile::base("debian:9-slim")
-        .push(Env::new(format!("informuser={}", get_user())))
-        .push(Workdir::new("/data"))
-        .push(Copy::new("tmp.deb /data/application.deb"))
-        .push(Run::new("apt-get update"));
-
-    if let Some(d) = &deb.dependencies {
-        dockerfile = dockerfile.push(Run::new(
-            format!("apt-get install -y {}", d.replace(&[','][..], "")))
-        );
-    }
-
-    return dockerfile
-        .push(Run::new("dpkg -i /data/application.deb || true"))
-        .push(Run::new("apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser"))
-        .push(User::new("$informuser"))
-        .push(Env::new("HOME /home/$informuser"))
-        .push(Cmd::new(deb.package.to_owned()))
-        .finish()
-        .to_string();
-}
-
-//TODO: make customization
-fn gen_desktop_entry() -> String {
-    DesktopEntry::new(
-        "Popsicle",
-        "APPID",
-        DesktopType::Application(
-            Application::new(&["System", "GTK"], "exec")
-                .keywords(&["usb", "flash" ,"drive", "image"])
-                .startup_notify(),
-        ),
-    )
-        .comment("Multiple USB image flasher")
-        .generic_name("USB Flasher")
-        .to_string()
 }
