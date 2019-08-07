@@ -76,8 +76,8 @@ impl App {
             .to_vec()
     }
 
-    pub fn remove(&mut self, program: &str) -> Result<&Self, Box<dyn Error>> {
-        let program = match self.config.find(program) {
+    pub fn remove<T: Into<String>>(&mut self, program: T) -> Result<&Self, Box<dyn Error>> {
+        let program = match self.config.find(program.into()) {
             Some(p) => p,
             None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
         };
@@ -163,7 +163,7 @@ impl App {
         Ok(self)
     }
 
-    pub fn run(&self, program: &str) -> Result<&Self, Box<dyn Error>> {
+    pub fn run<T: Into<String>>(&self, program: T) -> Result<&Self, Box<dyn Error>> {
         unimplemented!()
     }
 
@@ -173,9 +173,9 @@ impl App {
         Ok(self)
     }
 
-    pub fn new(prefix: &String, cache_path: &Path, config: &Config, system: &System, docker: &Docker) -> Self {
+    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &System, docker: &Docker) -> Self {
         App {
-            prefix: prefix.to_owned(),
+            prefix: prefix.into(),
             config: config.to_owned(),
             docker: docker.to_owned(),
             cache_path: cache_path.to_owned(),
