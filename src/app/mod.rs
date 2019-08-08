@@ -41,7 +41,7 @@ impl FeaturesList {
     }
 
     fn add_feature_if_driver_exists<T: Driver>(list: &mut HashMap<Feature, bool>, f: Feature, d: &Option<T>) {
-        list.insert(f, if let Some(_feature) = d { true } else { false });
+        list.insert(f, d.is_some());
     }
 }
 
