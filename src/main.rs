@@ -60,11 +60,12 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("Available features: {}", app.features);
         },
         Some("create") => {
-            app.create(Path::new(
+            app.create(std::fs::canonicalize(Path::new(
                 matches
                     .subcommand_matches("create").unwrap()
                     .value_of(&"package").unwrap()
-            ), vec![Feature::Display], &None)?;
+            )).unwrap().as_path(), vec![Feature::Display], &Some(Icon::default()))?;
+            info!("Program successfuly created");
         },
         Some("run") => {
             app.run(
@@ -79,7 +80,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                     .subcommand_matches("remove").unwrap()
                     .value_of(&"name").unwrap()
             )?;
-            println!("Program successfuly removed");
+            info!("Program successfuly removed");
         },
         Some("list") => {
             let list = app.list().join(", ");

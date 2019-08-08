@@ -146,7 +146,11 @@ impl<'a> App<'a> {
     }
 
     pub fn run<T: Into<String>>(&self, program: T) -> Result<&Self, Box<dyn Error>> {
-        unimplemented!()
+        let program = self.config.find(program)
+            .ok_or(AppError::Program("Program not found".to_string()))?.0;
+
+        self.docker.run(&program)?;
+        Ok(self)
     }
 
     pub fn save(&self, path: &Path) -> Result<&Self, Box<dyn Error>> {
@@ -155,13 +159,13 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
-    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &System, docker: &'a Docker) -> Self {
+    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &'a System, docker: &'a Docker) -> Self {
         let prefix = prefix.into();
 
         App {
             prefix: prefix.to_owned(),
             config: config.to_owned(),
-            docker: DockerFacade::new(docker, prefix, cache_path),
+            docker: DockerFacade::new(docker, system, prefix, cache_path),
             cache_path: cache_path.to_owned(),
             features: FeaturesList::new(&system)
         }

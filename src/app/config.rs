@@ -24,16 +24,17 @@ impl Icon {
         }
     }
 
-    fn prepare_assets(path: &Path) -> Result<(), Box<dyn Error>> {
+    fn prepare_assets(path: &Path) -> Result<PathBuf, Box<dyn Error>> {
         let mut path = Self::default_icon_path(path);
 
         if !path.exists() {
-            std::fs::write(path, include_bytes!("../../resources/default.ico").to_vec())?;
+            debug!("Icon image path: {:?}", path);
+            std::fs::write(&path, include_bytes!("../../resources/default.ico").to_vec())?;
         }
 
         info!("Icon assets prepared");
 
-        Ok(())
+        Ok(path)
     }
 
     fn default_icon_path(path: &Path) -> PathBuf {
@@ -45,13 +46,17 @@ impl Icon {
 
 impl Default for Icon {
     fn default() -> Self {
-        let mut path = dirs::picture_dir().unwrap();
-        path.push(ICON_NAME_DEFAULT);
+        let mut path = dirs::home_dir().unwrap();
+        path.push(".icons");
 
-        Self::prepare_assets(path.as_path());
+        if !path.exists() {
+            std::fs::create_dir(&path);
+        }
 
         Icon {
-            path: Self::default_icon_path(path.as_path()),
+            path: Self::prepare_assets(
+                path.as_path()
+            ).unwrap()
         }
     }
 }
