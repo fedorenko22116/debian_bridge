@@ -2,13 +2,11 @@ pub mod error;
 mod config;
 mod deb;
 mod util;
+mod docker;
 
 pub use config::{Config, Program, Feature, Icon};
-use tokio::{prelude::Future, runtime::Runtime};
-use tokio::prelude::{Stream};
 use std::path::{Path, PathBuf};
 use std::net::IpAddr;
-use shiplift::{Docker, BuildOptions};
 use std::error::Error;
 use std::collections::HashMap;
 use std::fmt::{Display, Formatter};
@@ -16,10 +14,12 @@ use std::ffi::OsStr;
 use colorful::Color;
 use colorful::Colorful;
 use colorful::core::StrMarker;
+use shiplift::Docker;
 use crate::sys::driver::Driver;
 use crate::System;
 use crate::app::deb::Deb;
 use crate::app::error::AppError;
+use crate::app::docker::DockerFacade;
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
@@ -60,15 +60,15 @@ impl Display for FeaturesList {
     }
 }
 
-pub struct App {
+pub struct App<'a> {
     prefix: String,
     cache_path: PathBuf,
     config: Config,
-    docker: Docker,
+    docker: DockerFacade<'a>,
     pub features: FeaturesList,
 }
 
-impl App {
+impl<'a> App<'a> {
     pub fn list(&self) -> Vec<String> {
         self.config.programs.iter()
             .map(|program| (&program).get_name_short().to_owned())
@@ -81,14 +81,8 @@ impl App {
             Some(p) => p,
             None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
         };
-        let fut = self.docker
-            .images()
-            .get(&program.0.get_name(&self.prefix))
-            .delete();
-        let mut rt = Runtime::new().unwrap();
 
-        rt.block_on(fut)?;
-        rt.shutdown_now().wait();
+        self.docker.delete(&program.0);
 
         if let Some(_) = program.0.icon {
             let mut path = dirs::desktop_dir().unwrap();
@@ -124,29 +118,17 @@ impl App {
         std::fs::write(&dockerfile_path, dockerfile)?;
 
         self.config.push(&Program::new(&deb.package, &app_path, &settings, &icon))?;
-
-        let fut = self.docker
-            .images()
-            .build(
-                &BuildOptions::builder(
-                    self.cache_path.as_os_str().to_str().unwrap()
-                ).tag(&format!("{}_{}", self.prefix, deb.package)).build()
-            )
-            .for_each(|output| {
-                debug!("{}", output);
-                Ok(())
-            })
-            .map_err(|e| return e);
-        let mut rt = Runtime::new().unwrap();
-
-        rt.block_on(fut)?;
-        rt.shutdown_now().wait();
+        self.docker.create(&deb);
 
         std::fs::remove_file(&dockerfile_path)?;
         std::fs::remove_file(&app_tmp_path)?;
 
-        if let Some(icon) = icon {
-            let entry = util::gen_desktop_entry(&deb.package, &deb.description.unwrap_or("Application".to_string()));
+        if let Some(icon) = &icon {
+            let entry = util::gen_desktop_entry(
+                &deb.package,
+                &deb.description.unwrap_or("Application".to_string()),
+                &icon.path
+            );
             let mut path = dirs::desktop_dir().unwrap();
 
             debug!("Generated new entry in '{}':\n{}", path.to_str().unwrap(), entry);
@@ -173,11 +155,13 @@ impl App {
         Ok(self)
     }
 
-    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &System, docker: &Docker) -> Self {
+    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &System, docker: &'a Docker) -> Self {
+        let prefix = prefix.into();
+
         App {
-            prefix: prefix.into(),
+            prefix: prefix.to_owned(),
             config: config.to_owned(),
-            docker: docker.to_owned(),
+            docker: DockerFacade::new(docker, prefix, cache_path),
             cache_path: cache_path.to_owned(),
             features: FeaturesList::new(&system)
         }

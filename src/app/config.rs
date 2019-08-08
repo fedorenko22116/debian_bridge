@@ -8,23 +8,51 @@ use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::fmt::Display;
 
-type AppResult<T> = Result<T, AppError>;
+pub type AppResult<T> = Result<T, AppError>;
+
+const ICON_NAME_DEFAULT: &str = "debian_bridge_default.ico";
 
 #[derive(Clone, Serialize, Deserialize)]
 pub struct Icon {
-    img: PathBuf,
-    mime: String
+    pub path: PathBuf,
 }
 
 impl Icon {
-    pub fn new() -> Self {
-        unimplemented!()
+    pub fn new(path: &Path) -> Self {
+        Icon {
+            path: path.to_owned(),
+        }
+    }
+
+    fn prepare_assets(path: &Path) -> Result<(), Box<dyn Error>> {
+        let mut path = Self::default_icon_path(path);
+
+        if !path.exists() {
+            std::fs::write(path, include_bytes!("../../resources/default.ico").to_vec())?;
+        }
+
+        info!("Icon assets prepared");
+
+        Ok(())
+    }
+
+    fn default_icon_path(path: &Path) -> PathBuf {
+        let mut path = path.to_owned();
+        path.push(ICON_NAME_DEFAULT);
+        path
     }
 }
 
 impl Default for Icon {
     fn default() -> Self {
-        unimplemented!()
+        let mut path = dirs::picture_dir().unwrap();
+        path.push(ICON_NAME_DEFAULT);
+
+        Self::prepare_assets(path.as_path());
+
+        Icon {
+            path: Self::default_icon_path(path.as_path()),
+        }
     }
 }
 

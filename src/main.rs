@@ -99,6 +99,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     app.save(&config_path)?;
 
     info!("Exit");
+
     std::env::remove_var("RUST_APP_LOG");
 
     Ok(())

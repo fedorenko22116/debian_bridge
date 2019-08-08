@@ -1,6 +1,7 @@
 use crate::app::deb::Deb;
 use dockerfile::{Dockerfile, Arg, Copy, Cmd, Run, User, Env, Workdir};
 use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
+use std::path::Path;
 
 fn get_user() -> String {
     match std::env::var_os("USER") {
@@ -37,20 +38,20 @@ pub fn gen_dockerfile(deb: &Deb) -> String {
         .to_string();
 }
 
-pub fn gen_desktop_entry(name: &String, description: &String) -> String {
-    let id = format!("{}.desktop", name);
+pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(name: T, description: S, icon: &Path) -> String {
+    let name = name.into();
     let exec = format!("{} run {}", env!("CARGO_PKG_NAME"), name);
 
     DesktopEntry::new(
         &name,
-        &id,
+        &icon.to_str().unwrap(),
         DesktopType::Application(
             Application::new(&["System", "GTK"], exec.as_str())
                 .keywords(&[name.as_str()])
                 .startup_notify(),
         ),
     )
-        .comment(description)
+        .comment(&description.into())
         .generic_name(&name)
         .to_string()
 }
