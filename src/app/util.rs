@@ -15,7 +15,8 @@ fn get_user() -> String {
     }
 }
 
-pub fn gen_dockerfile(deb: &Deb) -> String {
+pub fn gen_dockerfile<T: Into<String>>(deb: &Deb, cmd: T) -> String {
+    let cmd = cmd.into();
     let mut dockerfile = Dockerfile::base("debian:9-slim")
         .push(Env::new(format!("informuser={}", get_user())))
         .push(Workdir::new("/data"))
@@ -24,7 +25,7 @@ pub fn gen_dockerfile(deb: &Deb) -> String {
 
     if let Some(d) = &deb.dependencies {
         dockerfile = dockerfile.push(Run::new(
-            format!("apt-get install -y {}", d.replace(&[','][..], "")))
+            format!("apt-get install -y {}; exit 0", d.replace(&[','][..], "")))
         );
     }
 
@@ -33,7 +34,7 @@ pub fn gen_dockerfile(deb: &Deb) -> String {
         .push(Run::new("apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser"))
         .push(User::new("$informuser"))
         .push(Env::new("HOME /home/$informuser"))
-        .push(Cmd::new(deb.package.to_owned()))
+        .push(Cmd::new(cmd))
         .finish()
         .to_string();
 }

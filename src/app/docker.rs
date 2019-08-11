@@ -45,13 +45,17 @@ impl<'a> DockerFacade<'a> {
         Ok(self)
     }
 
-    pub fn create(&mut self, deb: &Deb) -> AppResult<&Self> {
+    pub fn create<T: Into<String>>(&mut self, name: T) -> AppResult<&Self> {
+        let tag = format!("{}_{}", self.prefix, name.into());
+
+        info!("Image name: {}", tag);
+
         let fut = self.docker
             .images()
             .build(
                 &BuildOptions::builder(
                     self.cache_path.as_os_str().to_str().unwrap()
-                ).tag(&format!("{}_{}", self.prefix, deb.package)).build()
+                ).tag(&tag).build()
             )
             .for_each(|output| {
                 debug!("{}", output);
@@ -74,20 +78,26 @@ impl<'a> DockerFacade<'a> {
 
     //TODO: add more options and add validations
     pub fn run(&self, program: &Program) -> AppResult<&Self> {
-        let mut options = ContainerOptions::builder(program.get_name_short().as_str());
+        let mut options = ContainerOptions::builder(
+            program.get_name(&self.prefix).as_str()
+        );
 
         options
             .attach_stderr(true)
             .attach_stdin(true)
-            .attach_stdout(true);
+            .attach_stdout(true)
+            .network_mode("host")
+            .privileged(true);
 
         if program.settings.contains(&Feature::Display) {
             options.env(vec!["DISPLAY"])
                 .volumes(vec![
                     "/tmp/.X11-unix:/tmp/.X11-unix",
-                ])
-                .network_mode("host")
-                .privileged(true);
+                ]);
+        }
+
+        if program.settings.contains(&Feature::HomePersistent) {
+            options.env(vec!["$HOME:$HOME"]);
         }
 
         let options = options.build();

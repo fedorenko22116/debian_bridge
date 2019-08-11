@@ -101,14 +101,22 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
-    pub fn create(&mut self, app_path: &Path, settings: Vec<Feature>, icon: &Option<Icon>) -> Result<&Self, Box<dyn Error>> {
+    pub fn create(
+        &mut self,
+        app_path: &Path,
+        settings: &Vec<Feature>,
+        icon: &Option<Icon>,
+        cmd: &Option<String>,
+        deps: &Option<String>
+    ) -> Result<&Self, Box<dyn Error>> {
         let deb = Deb::try_new(app_path)?;
+        let program = Program::new(&deb.package, &app_path, &settings, &icon, cmd.to_owned());
         let mut app_tmp_path = self.cache_path.to_owned();
         app_tmp_path.push(Path::new("tmp.deb"));
 
         std::fs::copy(app_path, &app_tmp_path);
 
-        let mut dockerfile = util::gen_dockerfile(&deb);
+        let mut dockerfile = util::gen_dockerfile(&deb, &program.command);
 
         debug!("Generated dockerfile:\n{}", dockerfile);
 
@@ -117,8 +125,8 @@ impl<'a> App<'a> {
 
         std::fs::write(&dockerfile_path, dockerfile)?;
 
-        self.config.push(&Program::new(&deb.package, &app_path, &settings, &icon))?;
-        self.docker.create(&deb);
+        self.config.push(&program)?;
+        self.docker.create(&deb.package);
 
         std::fs::remove_file(&dockerfile_path)?;
         std::fs::remove_file(&app_tmp_path)?;

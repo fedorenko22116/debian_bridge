@@ -42,4 +42,12 @@ subcommands:
         - package:
             required: true
             index: 1
-            help: path to .deb package
+            help: Path to .deb package
+        - command:
+            short: c
+            long: command
+            help: Custom command to run
+        - dependencies:
+            short: d
+            long: dependencies
+            help: Additional dependencies to install

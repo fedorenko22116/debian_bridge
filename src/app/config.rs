@@ -7,6 +7,7 @@ use std::io::BufReader;
 use serde::{Deserialize, Serialize};
 use std::io::Read;
 use std::fmt::Display;
+use std::ops::Deref;
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -90,23 +91,28 @@ pub struct Program {
     pub path: PathBuf,
     pub settings: Vec<Feature>,
     pub icon: Option<Icon>,
+    pub command: String,
 }
 
 impl Program {
-    pub fn get_name(&self, prefix: &String) -> String {
-        format!("{}_{}", prefix, self.name)
+    pub fn get_name<T: Into<String>>(&self, prefix: T) -> String {
+        format!("{}_{}", prefix.into(), self.name)
     }
 
     pub fn get_name_short(&self) -> String {
         self.name.to_owned()
     }
 
-    pub fn new<T: Into<String>>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>) -> Self {
+    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: Option<String>) -> Self
+        where T: Into<String> {
+        let name = name.into();
+
         Program {
-            name: name.into(),
+            name: name.to_owned(),
             path: path.to_owned(),
             settings: settings.to_vec(),
             icon: icon.to_owned(),
+            command: cmd.unwrap_or(name),
         }
     }
 }

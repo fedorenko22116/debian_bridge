@@ -3,8 +3,8 @@
 extern crate xdg;
 
 use debian_bridge::{App as Wrapper, Config, Program, Feature, System, Icon};
-use clap::{App, AppSettings};
-use std::path::Path;
+use clap::{App, AppSettings, ArgMatches};
+use std::path::{Path, PathBuf};
 use std::net::IpAddr;
 use std::str::FromStr;
 use std::error::Error;
@@ -37,8 +37,9 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     info!("Logger configured: debug level: {}", debug_level);
 
-    let config_path = xdg::BaseDirectories::with_prefix(&package_name)?
-        .place_config_file("config.json")?;
+    let config_path = matches.value_of("config").map(|c| std::fs::canonicalize(c).unwrap()).unwrap_or(
+        xdg::BaseDirectories::with_prefix(&package_name)?.place_config_file("config.json")?
+    );
 
     info!("Configuration path: {}", config_path.to_str().unwrap());
 
@@ -60,11 +61,13 @@ fn main() -> Result<(), Box<dyn Error>> {
             println!("Available features: {}", app.features);
         },
         Some("create") => {
-            app.create(std::fs::canonicalize(Path::new(
-                matches
-                    .subcommand_matches("create").unwrap()
-                    .value_of(&"package").unwrap()
-            )).unwrap().as_path(), vec![Feature::Display], &Some(Icon::default()))?;
+            app.create(
+                get_create_package(&matches).as_path(),
+                &vec![Feature::Display],
+                &Some(Icon::default()),
+                &get_create_command(&matches),
+                &get_create_deps(&matches),
+            )?;
             info!("Program successfuly created");
         },
         Some("run") => {
@@ -104,4 +107,26 @@ fn main() -> Result<(), Box<dyn Error>> {
     std::env::remove_var("RUST_APP_LOG");
 
     Ok(())
+}
+
+fn get_create_package(matches: &ArgMatches) -> PathBuf {
+    std::fs::canonicalize(Path::new(
+        matches
+            .subcommand_matches("create").unwrap()
+            .value_of(&"package").unwrap(),
+    )).unwrap()
+}
+
+fn get_create_command(matches: &ArgMatches) -> Option<String> {
+        matches
+            .subcommand_matches("create").unwrap()
+            .value_of(&"command")
+            .map(|s| s.to_string())
+}
+
+fn get_create_deps(matches: &ArgMatches) -> Option<String> {
+    matches
+        .subcommand_matches("create").unwrap()
+        .value_of(&"dependencies")
+        .map(|s| s.to_string())
 }
