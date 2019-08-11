@@ -103,7 +103,7 @@ impl Program {
         self.name.to_owned()
     }
 
-    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: Option<String>) -> Self
+    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: &Option<String>) -> Self
         where T: Into<String> {
         let name = name.into();
 
@@ -112,7 +112,8 @@ impl Program {
             path: path.to_owned(),
             settings: settings.to_vec(),
             icon: icon.to_owned(),
-            command: cmd.unwrap_or(name),
+            command: cmd.to_owned()
+                .unwrap_or(name),
         }
     }
 }

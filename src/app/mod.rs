@@ -110,7 +110,7 @@ impl<'a> App<'a> {
         deps: &Option<String>
     ) -> Result<&Self, Box<dyn Error>> {
         let deb = Deb::try_new(app_path)?;
-        let program = Program::new(&deb.package, &app_path, &settings, &icon, cmd.to_owned());
+        let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd);
         let mut app_tmp_path = self.cache_path.to_owned();
         app_tmp_path.push(Path::new("tmp.deb"));
 
