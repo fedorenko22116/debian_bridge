@@ -29,19 +29,14 @@ impl FeaturesList {
     pub fn new(system: &System) -> Self {
         let mut list = HashMap::new();
 
-        FeaturesList::add_feature_if_driver_exists(&mut list, Feature::Display, &system.wm);
-        FeaturesList::add_feature_if_driver_exists(&mut list, Feature::Sound, &system.sd);
-        FeaturesList::add_feature_if_driver_exists(&mut list, Feature::Webcam, &system.wcm);
-        FeaturesList::add_feature_if_driver_exists(&mut list, Feature::Printer, &system.pd);
-
+        list.insert(Feature::Display, system.wm.is_some());
+        list.insert(Feature::Sound, system.sd.is_some());
+        list.insert(Feature::Webcam, system.wcm.is_some());
+        list.insert(Feature::Printer, system.pd.is_some());
         list.insert(Feature::HomePersistent, true);
         list.insert(Feature::Notification, true);
 
         Self {list}
-    }
-
-    fn add_feature_if_driver_exists<T: Driver>(list: &mut HashMap<Feature, bool>, f: Feature, d: &Option<T>) {
-        list.insert(f, d.is_some());
     }
 }
 
