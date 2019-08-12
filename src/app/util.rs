@@ -2,6 +2,7 @@ use crate::app::deb::Deb;
 use dockerfile::{Dockerfile, Arg, Copy, Cmd, Run, User, Env, Workdir};
 use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use std::path::Path;
+use crate::Program;
 
 fn get_user() -> String {
     match std::env::var_os("USER") {
@@ -15,8 +16,7 @@ fn get_user() -> String {
     }
 }
 
-pub fn gen_dockerfile<T: Into<String>>(deb: &Deb, cmd: T) -> String {
-    let cmd = cmd.into();
+pub fn gen_dockerfile(deb: &Deb, program: &Program) -> String {
     let mut dockerfile = Dockerfile::base("debian:9-slim")
         .push(Env::new(format!("informuser={}", get_user())))
         .push(Workdir::new("/data"))
@@ -29,12 +29,18 @@ pub fn gen_dockerfile<T: Into<String>>(deb: &Deb, cmd: T) -> String {
         );
     }
 
+    if let Some(d) = &program.deps {
+        dockerfile = dockerfile.push(Run::new(
+            format!("apt-get install -y {}", d))
+        );
+    }
+
     return dockerfile
         .push(Run::new("dpkg -i /data/application.deb || true"))
         .push(Run::new("apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser"))
         .push(User::new("$informuser"))
         .push(Env::new("HOME /home/$informuser"))
-        .push(Cmd::new(cmd))
+        .push(Cmd::new(program.command.to_owned()))
         .finish()
         .to_string();
 }

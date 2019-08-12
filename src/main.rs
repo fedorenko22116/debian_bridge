@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some("create") => {
             app.create(
                 get_create_package(&matches).as_path(),
-                &vec![Feature::Display],
+                &get_create_features(&matches),
                 &Some(Icon::default()),
                 &get_create_command(&matches),
                 &get_create_deps(&matches),
@@ -107,6 +107,24 @@ fn main() -> Result<(), Box<dyn Error>> {
     std::env::remove_var("RUST_APP_LOG");
 
     Ok(())
+}
+
+fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
+    let mut features = vec![];
+
+    if matches.subcommand_matches("create").unwrap().is_present("display") {
+        features.push(Feature::Display);
+    }
+
+    if matches.subcommand_matches("create").unwrap().is_present("sound") {
+        features.push(Feature::Sound);
+    }
+
+    if matches.subcommand_matches("create").unwrap().is_present("home") {
+        features.push(Feature::HomePersistent);
+    }
+
+    features
 }
 
 fn get_create_package(matches: &ArgMatches) -> PathBuf {

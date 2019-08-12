@@ -1,4 +1,4 @@
-use shiplift::{Docker, BuildOptions, ContainerOptions};
+use shiplift::{Docker, BuildOptions};
 use tokio::{prelude::Future, runtime::Runtime};
 use tokio::prelude::{Stream};
 use std::error::Error;
@@ -6,6 +6,10 @@ use std::path::{PathBuf, Path};
 use crate::{Program, Feature, System};
 use crate::app::deb::Deb;
 use crate::app::error::AppError;
+use shiplift::rep::ContainerCreateInfo;
+use shiplift::tty::StreamType;
+use std::process::{Command, Stdio};
+use colorful::core::StrMarker;
 
 type AppResult<T> = Result<T, AppError>;
 
@@ -60,8 +64,7 @@ impl<'a> DockerFacade<'a> {
             .for_each(|output| {
                 debug!("{}", output);
                 Ok(())
-            })
-            .map_err(|e| return e);
+            });
         let mut rt = Runtime::new().unwrap();
 
         match rt.block_on(fut) {
@@ -76,44 +79,49 @@ impl<'a> DockerFacade<'a> {
         Ok(self)
     }
 
-    //TODO: add more options and add validations
+    //TODO: add more options and rewrite with docker API if possible
     pub fn run(&self, program: &Program) -> AppResult<&Self> {
-        let mut options = ContainerOptions::builder(
-            program.get_name(&self.prefix).as_str()
-        );
-
-        options
-            .attach_stderr(true)
-            .attach_stdin(true)
-            .attach_stdout(true)
-            .network_mode("host")
-            .privileged(true);
+        let home = std::env::var_os("HOME")
+            .unwrap().to_str().unwrap().to_string();
+        let cmd_name = program.get_name(&self.prefix);
+        let home_volume = format!("{}:{}", home, home);
+        let mut args = vec![
+            "run", "-ti", "--net=host", "--rm",
+            "-v", "/dev/shm:/dev/shm",
+            "-v", "/etc/machine-id:/etc/machine-id",
+            "-v", "/var/lib/dbus:/var/lib/dbus",
+            "--privileged"
+        ];
 
         if program.settings.contains(&Feature::Display) {
-            options.env(vec!["DISPLAY"])
-                .volumes(vec![
-                    "/tmp/.X11-unix:/tmp/.X11-unix",
-                ]);
+            args.push("-v");
+            args.push("/tmp/.X11-unix:/tmp/.X11-unix");
+            args.push("--env");
+            args.push("DISPLAY");
+        }
+
+        if program.settings.contains(&Feature::Sound) {
+            args.push("-v");
+            args.push("/dev/snd:/dev/snd");
         }
 
         if program.settings.contains(&Feature::HomePersistent) {
-            options.env(vec!["$HOME:$HOME"]);
+            args.push("-v");
+            args.push(&home_volume);
         }
 
-        let options = options.build();
+        args.push(&cmd_name);
 
-        let fut = self.docker
-            .containers()
-            .create(&options)
-            .map(|i| info!("{:?}", i))
-            .map_err(|e| error!("{}", e));
-        let mut rt = Runtime::new().unwrap();
+        let mut cmd = Command::new("docker")
+            .args(args)
+            .stdout(Stdio::inherit())
+            .stderr(Stdio::inherit())
+            .spawn()
+            .map_err(|err| AppError::Docker)?;
 
-        match rt.block_on(fut) {
-            Ok(_) => (),
-            Err(err) => return Err(AppError::Docker)
-        };
-        rt.shutdown_now().wait();
+        let status = cmd.wait();
+
+        info!("Exited with status {:?}", status);
 
         Ok(self)
     }

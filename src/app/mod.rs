@@ -15,11 +15,11 @@ use colorful::Color;
 use colorful::Colorful;
 use colorful::core::StrMarker;
 use shiplift::Docker;
+use deb::Deb;
+use error::AppError;
+use docker::DockerFacade;
 use crate::sys::driver::Driver;
 use crate::System;
-use crate::app::deb::Deb;
-use crate::app::error::AppError;
-use crate::app::docker::DockerFacade;
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
@@ -105,13 +105,13 @@ impl<'a> App<'a> {
         deps: &Option<String>
     ) -> Result<&Self, Box<dyn Error>> {
         let deb = Deb::try_new(app_path)?;
-        let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd);
+        let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd, &deps);
         let mut app_tmp_path = self.cache_path.to_owned();
         app_tmp_path.push(Path::new("tmp.deb"));
 
         std::fs::copy(app_path, &app_tmp_path);
 
-        let mut dockerfile = util::gen_dockerfile(&deb, &program.command);
+        let mut dockerfile = util::gen_dockerfile(&deb, &program);
 
         debug!("Generated dockerfile:\n{}", dockerfile);
 

@@ -92,6 +92,7 @@ pub struct Program {
     pub settings: Vec<Feature>,
     pub icon: Option<Icon>,
     pub command: String,
+    pub deps: Option<String>,
 }
 
 impl Program {
@@ -103,7 +104,7 @@ impl Program {
         self.name.to_owned()
     }
 
-    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: &Option<String>) -> Self
+    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: &Option<String>, deps: &Option<String>) -> Self
         where T: Into<String> {
         let name = name.into();
 
@@ -114,6 +115,7 @@ impl Program {
             icon: icon.to_owned(),
             command: cmd.to_owned()
                 .unwrap_or(name),
+            deps: deps.to_owned()
         }
     }
 }

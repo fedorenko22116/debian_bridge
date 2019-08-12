@@ -44,10 +44,22 @@ subcommands:
             index: 1
             help: Path to .deb package
         - command:
-            short: c
             long: command
+            takes_value: true
             help: Custom command to run
         - dependencies:
-            short: d
             long: dependencies
+            takes_value: true
             help: Additional dependencies to install
+        - display:
+            short: d
+            long: display
+            help: Share host display
+        - sound:
+            short: s
+            long: sound
+            help: Share sound device
+        - home:
+            short: h
+            long: home
+            help: Mount home directory
