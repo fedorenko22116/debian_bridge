@@ -6,13 +6,8 @@ rust:
 
 matrix:
   fast_finish: true
-  include:
-    - rust: 'stable'
-      env: TESTS=false
-    - rust: 'nightly'
-      env: TESTS=true
 
 script:
   - cargo build
-  - env $TESTS && cargo test
+  - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then cargo test; fi
 
