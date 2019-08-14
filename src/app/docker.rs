@@ -37,13 +37,10 @@ impl<'a> DockerFacade<'a> {
             .delete();
         let mut rt = Runtime::new().unwrap();
 
-        match rt.block_on(fut) {
-            Ok(_) => (),
-            Err(err) => {
+        rt.block_on(fut).map_err(|err| {
                 error!("{}", err.to_string());
-                return Err(AppError::Docker)
-            }
-        };
+                AppError::Docker
+            })?;
         rt.shutdown_now().wait();
 
         Ok(self)
@@ -67,13 +64,10 @@ impl<'a> DockerFacade<'a> {
             });
         let mut rt = Runtime::new().unwrap();
 
-        match rt.block_on(fut) {
-            Ok(_) => (),
-            Err(err) => {
+        rt.block_on(fut).map_err(|err| {
                 error!("{}", err.to_string());
-                return Err(AppError::Docker)
-            }
-        };
+                AppError::Docker
+            })?;
         rt.shutdown_now().wait();
 
         Ok(self)

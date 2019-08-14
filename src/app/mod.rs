@@ -75,13 +75,14 @@ impl<'a> App<'a> {
         let program = match self.config.find(program.into()) {
             Some(p) => p,
             None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
-        };
+        }.0;
 
-        self.docker.delete(&program.0);
+        self.docker.delete(&program)?;
+        self.config.remove(&program)?;
 
-        if let Some(_) = program.0.icon {
+        if let Some(_) = program.icon {
             let mut path = dirs::desktop_dir().unwrap();
-            let name = format!("{}.desktop", program.0.get_name_short());
+            let name = format!("{}.desktop", program.get_name_short());
 
             path.push(name);
 
@@ -90,8 +91,6 @@ impl<'a> App<'a> {
                 ()
             });
         }
-
-        self.config.remove(&program.0)?;
 
         Ok(self)
     }

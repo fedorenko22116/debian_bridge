@@ -6,7 +6,7 @@ use colorful::core::StrMarker;
 use pipers::Pipe;
 use regex::Regex;
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct Deb {
     pub package: String,
     pub version: Option<String>,
@@ -34,10 +34,9 @@ impl Deb {
             .unwrap()
             .wait_with_output();
 
-        let output = match info {
-            Ok(o) => (*String::from_utf8_lossy(&o.stdout)).to_owned(),
-            Err(e) => return Err(AppError::File(e.to_string()))
-        };
+        let output = info
+            .map(|o| (*String::from_utf8_lossy(&o.stdout)).to_owned())
+            .map_err(|e| AppError::File(e.to_string()))?;
 
         Ok(
             Deb {

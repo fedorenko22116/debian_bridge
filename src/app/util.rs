@@ -4,6 +4,10 @@ use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use std::path::Path;
 use crate::Program;
 
+#[cfg(test)]
+use mocktopus::macros::*;
+
+#[cfg_attr(test, mockable)]
 fn get_user() -> String {
     match std::env::var_os("USER") {
         Some(os_string) =>  {
@@ -61,4 +65,54 @@ pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(name: T, description:
         .comment(&description.into())
         .generic_name(&name)
         .to_string()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use mocktopus::mocking::MockResult;
+    use mocktopus::mocking::Mockable;
+
+    #[test]
+    fn test_gen_dockerfile() {
+        get_user.mock_safe(|| MockResult::Return("user".to_string()));
+
+        let dockerfile = gen_dockerfile(&get_deb(), &get_program());
+
+        assert_eq!(dockerfile, "\
+            FROM debian:9-slim\n\
+            ENV informuser=user\n\
+            WORKDIR /data\n\
+            COPY tmp.deb /data/application.deb\n\
+            RUN apt-get update\n\
+            RUN apt-get install -y foo bar; exit 0\n\
+            RUN apt-get install -y baz qux\n\
+            RUN dpkg -i /data/application.deb || true\n\
+            RUN apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser\n\
+            USER $informuser\n\
+            ENV HOME /home/$informuser\n\
+            CMD foobar\n"
+        )
+    }
+
+    fn get_program() -> Program {
+        Program::new("foobar".to_string(), Path::new(""), &vec![], &None, &None, &Some("baz qux".to_string()))
+    }
+
+    fn get_deb() -> Deb {
+        Deb {
+            package: "".to_string(),
+            version: None,
+            license: None,
+            vendor: None,
+            architecture: None,
+            maintainer: None,
+            installed_size: None,
+            dependencies: Some("foo, bar".to_string()),
+            section: None,
+            priority: None,
+            homepage: None,
+            description: None
+        }
+    }
 }

@@ -23,3 +23,6 @@ pipers = "1.0.1"
 regex = "1.2.1"
 freedesktop-desktop-entry = "0.1.1"
 dirs = "2.0.2"
+
+[dev-dependencies]
+mocktopus = "0.7.0"

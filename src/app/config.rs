@@ -128,39 +128,30 @@ pub struct Config {
 impl Config {
     pub fn deserialize(path: &Path) -> AppResult<Self> {
         if !path.exists() {
-            return match File::create(path) {
-                Result::Ok(_) => Ok(Config { programs: vec![] }),
-                Result::Err(err) => Err(AppError::File(err.to_string()))
-            }
+            return File::create(path).map(|_| Config { programs: vec![] })
+                .map_err(|err| AppError::File(err.to_string()));
         }
 
         let mut config_str = String::new();
-        let config_file = match File::open(path) {
-            Err(err) => return Err(AppError::File(err.to_string())),
-            Ok(res) => res,
-        };
-        let mut br = BufReader::new(config_file);
-        match br.read_to_string(&mut config_str) {
-            Err(err) => return Err(AppError::File(err.to_string())),
-            Ok(res) => res,
-        };
+        let config_file = File::open(path)
+            .map_err(|err| AppError::File(err.to_string()))?;
 
-        match serde_json::from_str(config_str.as_str()) {
-            Ok(res) => Ok(res),
-            Err(err) => Err(AppError::File(err.to_string())),
-        }
+        let mut br = BufReader::new(config_file);
+
+        br.read_to_string(&mut config_str)
+            .map_err(|err| AppError::File(err.to_string()))?;
+
+        serde_json::from_str(config_str.as_str())
+            .map_err(|err| AppError::File(err.to_string()))
     }
 
     pub fn serialize(&self, path: &Path) -> AppResult<&Self> {
-        let data = match serde_json::to_string(&self) {
-            Ok(res) => res,
-            Err(err) => return Err(AppError::File(err.to_string())),
-        };
+        let data = serde_json::to_string(&self)
+            .map_err(|err| AppError::File(err.to_string()))?;
 
-        match std::fs::write(path, data.as_bytes()) {
-            Ok(res) => Ok(self),
-            Err(err) => Err(AppError::File(err.to_string()))
-        }
+        std::fs::write(path, data.as_bytes())
+            .map(|_| self)
+            .map_err(|err| AppError::File(err.to_string()))
     }
 
     pub fn push(&mut self, program: &Program) -> AppResult<&Self> {
@@ -184,12 +175,8 @@ impl Config {
     }
 
     pub fn remove(&mut self, program: &Program) -> AppResult<&Self> {
-        let program_idx = match self.find(&program.name) {
-            Some(elem) => elem.1,
-            None => return Err(
-                AppError::Program(format!("Can't find a program '{}'", program.name).to_string())
-            ),
-        };
+        let program_idx = self.find(&program.name)
+            .ok_or(AppError::Program(format!("Can't find a program '{}'", program.name).to_string()))?.1;
 
         self.programs.remove(program_idx);
         Ok(self)

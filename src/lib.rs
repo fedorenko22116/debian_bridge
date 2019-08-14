@@ -1,4 +1,9 @@
-#[macro_use] pub extern crate log;
+#![cfg_attr(test, feature(proc_macro_hygiene))]
+#[cfg(test)]
+extern crate mocktopus;
+
+#[macro_use]
+pub extern crate log;
 extern crate shiplift;
 extern crate tokio;
 extern crate colorful;

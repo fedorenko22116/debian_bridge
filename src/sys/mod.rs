@@ -84,28 +84,22 @@ impl System {
     }
 
     fn get_printer_driver() -> Option<PrinterDriver> {
-        let printer_exists = Command::new("lpstat")
+        Command::new("lpstat")
             .arg("-d")
             .stdout(Stdio::null())
-            .status();
-
-        match printer_exists {
-            Ok(_) => Some(PrinterDriver::Default),
-            _ => None,
-        }
+            .status()
+            .ok()
+            .map(|_| PrinterDriver::Default)
     }
 
     fn get_web_cam_driver() -> Option<WebCamDriver> {
-        let wcm = Command::new("ls")
+        Command::new("ls")
             .arg("-ld")
             .arg("/sys/class/video4linux/video0/device/driver")
             .stdout(Stdio::null())
-            .status();
-
-        match wcm {
-            Ok(_) => Some(WebCamDriver::Default),
-            _ => None,
-        }
+            .status()
+            .ok()
+            .map(|_| WebCamDriver::Default)
     }
 }
 
