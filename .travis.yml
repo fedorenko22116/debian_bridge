@@ -13,6 +13,6 @@ matrix:
       env: TESTS=true
 
 script:
-  - cargo build --verbose --all
-  - env TESTS cargo test --verbose --all
+  - cargo build
+  - env $TESTS && cargo test
 
