@@ -2,15 +2,17 @@ language: rust
 
 rust:
   - stable
-  - beta
   - nightly
 
 matrix:
-  allow_failures:
-    - rust: nightly
   fast_finish: true
+  include:
+    - rust: 'stable'
+      env: TESTS=false
+    - python: 'nightly'
+      env: TESTS=true
 
 script:
   - cargo build --verbose --all
-  - cargo test --verbose --all
+  - env TESTS cargo test --verbose --all
 
