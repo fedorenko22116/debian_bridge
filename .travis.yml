@@ -9,7 +9,7 @@ matrix:
   include:
     - rust: 'stable'
       env: TESTS=false
-    - python: 'nightly'
+    - rust: 'nightly'
       env: TESTS=true
 
 script:
