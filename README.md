@@ -1,4 +1,5 @@
 # debian_bridge
+[![Build Status](https://travis-ci.com/22116/debian_bridge.svg?branch=master)](https://travis-ci.com/22116/debian_bridge)
 
 CLI tool to automatize creation and running an applications with debian using docker.
 
