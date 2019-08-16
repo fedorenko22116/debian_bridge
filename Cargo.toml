@@ -1,10 +1,11 @@
 [package]
 name = "debian_bridge"
 description = "Bridge to run .deb packages on your distribution using docker"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["victor <fedorenko22116@gmail.com>"]
 edition = "2018"
 license = "MIT"
+build = "build.rs"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,3 +27,8 @@ dirs = "2.0.2"
 
 [dev-dependencies]
 mocktopus = "0.7.0"
+
+[build-dependencies]
+clap = { version = "2.33.0", features = ["yaml"] }
+xdg = "^2.1"
+dirs = "2.0.2"
