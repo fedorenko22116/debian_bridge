@@ -19,12 +19,18 @@ fn source_bashrc() -> Result<(), Box<dyn Error>> {
     let config_path = xdg::BaseDirectories::with_prefix(env!("CARGO_PKG_NAME"))?
         .get_config_home();
     let yaml = load_yaml!("./config/cli.yaml");
-    let matches = App::from_yaml(yaml)
-        .gen_completions(
-            env!("CARGO_PKG_NAME"),
-            Shell::Bash,
-            config_path.as_os_str().to_owned()
-        );
+    let result = std::panic::catch_unwind(|| {
+        App::from_yaml(yaml)
+            .gen_completions(
+                env!("CARGO_PKG_NAME"),
+                Shell::Bash,
+                config_path.as_os_str().to_owned()
+            );
+    });
+
+    if let Err(err) = result {
+        return Err("Can not create a file".into());
+    }
 
     let source_str = format!(
         "\nsource {}{}.bash",
