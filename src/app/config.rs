@@ -82,10 +82,10 @@ impl Display for Feature {
                 Feature::Display => "Display",
                 Feature::Sound => "Sound",
                 Feature::Notification => "Notification",
-                Feature::Webcam => "Webcam",
-                Feature::Printer => "Printer",
+                Feature::Webcam => "Webcam (not implemented yet)",
+                Feature::Printer => "Printer (not implemented yet)",
                 Feature::HomePersistent => "Home persistent",
-                Feature::Time => "Time",
+                Feature::Time => "Timezone",
             }
         )
     }

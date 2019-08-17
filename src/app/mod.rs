@@ -48,7 +48,7 @@ impl Display for FeaturesList {
         for (feature, available) in &self.list {
             writeln!(
                 f,
-                "\t{:<15} ===> {}",
+                "\t{:<30} ===> {}",
                 format!("{}", feature),
                 match available {
                     true => "available".color(Color::Green),

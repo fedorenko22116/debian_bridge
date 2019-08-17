@@ -61,12 +61,13 @@ System settings:
 
 Available features: 
 
-	Webcam          ===> available
-	Printer         ===> available
-	Home persistent ===> available
-	Notification    ===> available
-	Display         ===> available
-	Sound           ===> available
+	Webcam (not implemented yet)   ===> available
+	Display                        ===> available
+	Timezone                       ===> available
+	Sound                          ===> available
+	Printer (not implemented yet)  ===> available
+	Home persistent                ===> available
+	Notification                   ===> available
 ```
 
 Warning: some features aren't available for now, like `Notification` even if it exists here. 
