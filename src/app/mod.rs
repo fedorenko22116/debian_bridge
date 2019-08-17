@@ -13,6 +13,7 @@ use error::AppError;
 use shiplift::Docker;
 use std::{
     collections::HashMap,
+    error::Error,
     fmt::{Display, Formatter},
     net::IpAddr,
     path::{Path, PathBuf},

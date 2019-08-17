@@ -84,7 +84,7 @@ mod tests {
         assert_eq!(
             dockerfile,
             "\
-            FROM debian:9-slim\nENV informuser=user\nWORKDIR /data\nCOPY tmp.deb \
+             FROM debian:9-slim\nENV informuser=user\nWORKDIR /data\nCOPY tmp.deb \
              /data/application.deb\nRUN apt-get update\nRUN apt-get install -y foo bar; exit \
              0\nRUN apt-get install -y baz qux\nRUN dpkg -i /data/application.deb || true\nRUN \
              apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && \
