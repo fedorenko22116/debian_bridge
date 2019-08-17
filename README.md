@@ -70,7 +70,7 @@ Available features:
 	Notification                   ===> available
 ```
 
-Warning: some features aren't available for now, like `Notification` even if it exists here. 
+Warning: some features aren't available for now, like `Webcam` even if it exists here. And some features require in additional setup like `Notification`
 
 ### Creating an application
 
