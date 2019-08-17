@@ -7,6 +7,10 @@ use clap::{App, Shell};
 use std::{error::Error, path::Path};
 
 fn main() {
+    if !cfg!(target_os = "linux") {
+        panic!("Only linux supported for now.");
+    }
+
     source_bashrc().unwrap_or_else(|err| {
         println!("Can not install autocompletion: {}", err.to_string());
         println!(

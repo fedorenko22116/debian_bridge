@@ -119,6 +119,16 @@ impl<'a> DockerFacade<'a> {
             args.push(&home_volume);
         }
 
+        if program.settings.contains(&Feature::Time) {
+            args.push("-v");
+            args.push("/etc/localtime:/etc/localtime");
+        }
+
+        if program.settings.contains(&Feature::Notification) {
+            args.push("-v");
+            args.push("/var/lib/dbus:/var/lib/dbus");
+        }
+
         args.push(&cmd_name);
 
         let mut cmd = Command::new("docker")

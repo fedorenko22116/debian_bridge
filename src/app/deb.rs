@@ -31,7 +31,9 @@ impl Deb {
         let info = Pipe::new(format!("ar p {} control.tar.gz", path.to_str().unwrap()).as_str())
             .then("tar xzOf - ./control")
             .finally()
-            .unwrap()
+            .map_err(|err| {
+                AppError::Program(format!("Can not parse a package: {}", err.to_string()))
+            })?
             .wait_with_output();
 
         let output = info
@@ -39,7 +41,9 @@ impl Deb {
             .map_err(|e| AppError::File(e.to_string()))?;
 
         Ok(Deb {
-            package: Deb::parse_output(&output, "Package").unwrap(),
+            package: Deb::parse_output(&output, "Package").ok_or(AppError::Program(
+                "Can not parse an input package".to_string(),
+            ))?,
             version: Deb::parse_output(&output, "Version"),
             license: Deb::parse_output(&output, "License"),
             vendor: Deb::parse_output(&output, "Vendor"),

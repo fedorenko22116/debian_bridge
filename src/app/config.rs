@@ -70,6 +70,7 @@ pub enum Feature {
     Webcam,
     Printer,
     HomePersistent,
+    Time,
 }
 
 impl Display for Feature {
@@ -84,6 +85,7 @@ impl Display for Feature {
                 Feature::Webcam => "Webcam",
                 Feature::Printer => "Printer",
                 Feature::HomePersistent => "Home persistent",
+                Feature::Time => "Time",
             }
         )
     }

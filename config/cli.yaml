@@ -15,6 +15,7 @@ args:
 
 subcommands:
   - run:
+      version: stable
       about: Run installed program
       args:
         - name:
@@ -23,6 +24,7 @@ subcommands:
             help: Program name
 
   - remove:
+      version: stable
       about: Remove program, container, build
       args:
         - name:
@@ -31,12 +33,15 @@ subcommands:
             help: Program name
 
   - list:
+      version: stable
       about: Show installed programs with their containers
 
   - test:
+      version: stable
       about: Test compatibility and feature access
 
   - create:
+      version: stable
       about: Create new docker build for existed package
       args:
         - package:
@@ -63,3 +68,11 @@ subcommands:
             short: h
             long: home
             help: Mount home directory
+        - notifications:
+            short: n
+            long: notifications
+            help: Mount dbus
+        - timezone:
+            short: t
+            long: timezone
+            help: Share local timezone

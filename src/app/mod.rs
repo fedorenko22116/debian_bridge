@@ -19,6 +19,8 @@ use std::{
     path::{Path, PathBuf},
 };
 
+type AppResult<T> = Result<T, Box<dyn Error>>;
+
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
 }
@@ -33,6 +35,7 @@ impl FeaturesList {
         list.insert(Feature::Printer, system.pd.is_some());
         list.insert(Feature::HomePersistent, true);
         list.insert(Feature::Notification, true);
+        list.insert(Feature::Time, true);
 
         Self { list }
     }
@@ -76,7 +79,7 @@ impl<'a> App<'a> {
             .to_vec()
     }
 
-    pub fn remove<T: Into<String>>(&mut self, program: T) -> Result<&Self, Box<dyn Error>> {
+    pub fn remove<T: Into<String>>(&mut self, program: T) -> AppResult<&Self> {
         let program = match self.config.find(program.into()) {
             Some(p) => p,
             None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
@@ -108,7 +111,7 @@ impl<'a> App<'a> {
         icon: &Option<Icon>,
         cmd: &Option<String>,
         deps: &Option<String>,
-    ) -> Result<&Self, Box<dyn Error>> {
+    ) -> AppResult<&Self> {
         let deb = Deb::try_new(app_path)?;
         let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd, &deps);
         let mut app_tmp_path = self.cache_path.to_owned();
@@ -157,7 +160,7 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
-    pub fn run<T: Into<String>>(&self, program: T) -> Result<&Self, Box<dyn Error>> {
+    pub fn run<T: Into<String>>(&self, program: T) -> AppResult<&Self> {
         let program = self
             .config
             .find(program)
@@ -168,7 +171,7 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
-    pub fn save(&self, path: &Path) -> Result<&Self, Box<dyn Error>> {
+    pub fn save(&self, path: &Path) -> AppResult<&Self> {
         self.config.serialize(path)?;
         debug!("Config updated");
         Ok(self)

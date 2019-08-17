@@ -14,10 +14,6 @@ use std::{
 };
 
 fn main() -> Result<(), Box<dyn Error>> {
-    if !cfg!(target_os = "linux") {
-        return Err("Only linux supported for now.".into());
-    }
-
     let package_name = env!("CARGO_PKG_NAME").to_owned();
     let yaml = load_yaml!("../config/cli.yaml");
     let matches = App::from_yaml(yaml)
@@ -142,6 +138,22 @@ fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
         .is_present("home")
     {
         features.push(Feature::HomePersistent);
+    }
+
+    if matches
+        .subcommand_matches("create")
+        .unwrap()
+        .is_present("notifications")
+    {
+        features.push(Feature::Notification);
+    }
+
+    if matches
+        .subcommand_matches("timezone")
+        .unwrap()
+        .is_present("home")
+    {
+        features.push(Feature::Time);
     }
 
     features

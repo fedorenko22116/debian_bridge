@@ -3,6 +3,7 @@ use dockerfile::{Cmd, Copy, Dockerfile, Env, Run, User, Workdir};
 use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use std::path::Path;
 
+use crate::Feature;
 #[cfg(test)]
 use mocktopus::macros::*;
 
