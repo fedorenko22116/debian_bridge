@@ -20,4 +20,5 @@ mod app;
 mod sys;
 
 pub use app::*;
+pub use shiplift::Docker;
 pub use sys::System;

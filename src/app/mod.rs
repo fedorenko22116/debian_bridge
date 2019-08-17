@@ -119,7 +119,7 @@ impl<'a> App<'a> {
 
         std::fs::copy(app_path, &app_tmp_path);
 
-        let mut dockerfile = util::gen_dockerfile(&deb, &program);
+        let mut dockerfile = util::gen_dockerfile(&deb, &program)?;
 
         debug!("Generated dockerfile:\n{}", dockerfile);
 
@@ -140,6 +140,15 @@ impl<'a> App<'a> {
                 &deb.description.unwrap_or("Application".to_string()),
                 &icon.path,
             );
+
+            let entry = match entry {
+                Ok(res) => res,
+                Err(err) => {
+                    warn!("{}", err.to_string());
+                    return Ok(self);
+                }
+            };
+
             let mut path = dirs::desktop_dir().unwrap();
 
             debug!(

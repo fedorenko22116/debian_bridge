@@ -1,7 +1,7 @@
 [package]
 name = "debian_bridge"
 description = "Bridge to run .deb packages on your distribution using docker"
-version = "0.1.2"
+version = "0.1.3"
 authors = ["victor <fedorenko22116@gmail.com>"]
 edition = "2018"
 license = "MIT"

@@ -4,7 +4,7 @@
 CLI tool to automatize creation and running an applications with debian using docker.
 
 ```
-debian_bridge 0.1.1
+debian_bridge 0.1.3
 victor <fedorenko22116@gmail.com>
 
 USAGE:

@@ -5,7 +5,7 @@ extern crate log;
 extern crate xdg;
 
 use clap::{App, AppSettings, ArgMatches};
-use debian_bridge::{App as Wrapper, Config, Feature, Icon, Program, System};
+use debian_bridge::{App as Wrapper, Config, Docker, Feature, Icon, Program, System};
 use std::{
     error::Error,
     net::IpAddr,
@@ -50,7 +50,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     info!("Cache path: {}", cache_path.to_str().unwrap());
 
-    let docker = shiplift::Docker::new();
+    let docker = Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
     let mut app = Wrapper::new(&package_name, &cache_path, &config, &system, &docker);
@@ -149,9 +149,9 @@ fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
     }
 
     if matches
-        .subcommand_matches("timezone")
+        .subcommand_matches("create")
         .unwrap()
-        .is_present("home")
+        .is_present("timezone")
     {
         features.push(Feature::Time);
     }
