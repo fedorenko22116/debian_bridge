@@ -1,13 +1,12 @@
 use super::error::AppError;
-use std::path::{Path, PathBuf};
-use std::error::Error;
-use std::str::FromStr;
-use std::fs::File;
-use std::io::BufReader;
 use serde::{Deserialize, Serialize};
-use std::io::Read;
-use std::fmt::Display;
-use std::ops::Deref;
+use std::{
+    error::Error,
+    fmt::Display,
+    fs::File,
+    io::{BufReader, Read},
+    path::{Path, PathBuf},
+};
 
 pub type AppResult<T> = Result<T, AppError>;
 
@@ -30,7 +29,10 @@ impl Icon {
 
         if !path.exists() {
             debug!("Icon image path: {:?}", path);
-            std::fs::write(&path, include_bytes!("../../resources/default.ico").to_vec())?;
+            std::fs::write(
+                &path,
+                include_bytes!("../../resources/default.ico").to_vec(),
+            )?;
         }
 
         info!("Icon assets prepared");
@@ -55,9 +57,7 @@ impl Default for Icon {
         }
 
         Icon {
-            path: Self::prepare_assets(
-                path.as_path()
-            ).unwrap()
+            path: Self::prepare_assets(path.as_path()).unwrap(),
         }
     }
 }
@@ -74,14 +74,18 @@ pub enum Feature {
 
 impl Display for Feature {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Feature::Display => "Display",
-            Feature::Sound => "Sound",
-            Feature::Notification => "Notification",
-            Feature::Webcam => "Webcam",
-            Feature::Printer => "Printer",
-            Feature::HomePersistent => "Home persistent",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Feature::Display => "Display",
+                Feature::Sound => "Sound",
+                Feature::Notification => "Notification",
+                Feature::Webcam => "Webcam",
+                Feature::Printer => "Printer",
+                Feature::HomePersistent => "Home persistent",
+            }
+        )
     }
 }
 
@@ -104,8 +108,17 @@ impl Program {
         self.name.to_owned()
     }
 
-    pub fn new<T>(name: T, path: &Path, settings: &Vec<Feature>, icon: &Option<Icon>, cmd: &Option<String>, deps: &Option<String>) -> Self
-        where T: Into<String> {
+    pub fn new<T>(
+        name: T,
+        path: &Path,
+        settings: &Vec<Feature>,
+        icon: &Option<Icon>,
+        cmd: &Option<String>,
+        deps: &Option<String>,
+    ) -> Self
+    where
+        T: Into<String>,
+    {
         let name = name.into();
 
         Program {
@@ -113,9 +126,8 @@ impl Program {
             path: path.to_owned(),
             settings: settings.to_vec(),
             icon: icon.to_owned(),
-            command: cmd.to_owned()
-                .unwrap_or(name),
-            deps: deps.to_owned()
+            command: cmd.to_owned().unwrap_or(name),
+            deps: deps.to_owned(),
         }
     }
 }
@@ -128,26 +140,24 @@ pub struct Config {
 impl Config {
     pub fn deserialize(path: &Path) -> AppResult<Self> {
         if !path.exists() {
-            return File::create(path).map(|_| Config { programs: vec![] })
+            return File::create(path)
+                .map(|_| Config { programs: vec![] })
                 .map_err(|err| AppError::File(err.to_string()));
         }
 
         let mut config_str = String::new();
-        let config_file = File::open(path)
-            .map_err(|err| AppError::File(err.to_string()))?;
+        let config_file = File::open(path).map_err(|err| AppError::File(err.to_string()))?;
 
         let mut br = BufReader::new(config_file);
 
         br.read_to_string(&mut config_str)
             .map_err(|err| AppError::File(err.to_string()))?;
 
-        serde_json::from_str(config_str.as_str())
-            .map_err(|err| AppError::File(err.to_string()))
+        serde_json::from_str(config_str.as_str()).map_err(|err| AppError::File(err.to_string()))
     }
 
     pub fn serialize(&self, path: &Path) -> AppResult<&Self> {
-        let data = serde_json::to_string(&self)
-            .map_err(|err| AppError::File(err.to_string()))?;
+        let data = serde_json::to_string(&self).map_err(|err| AppError::File(err.to_string()))?;
 
         std::fs::write(path, data.as_bytes())
             .map(|_| self)
@@ -156,11 +166,16 @@ impl Config {
 
     pub fn push(&mut self, program: &Program) -> AppResult<&Self> {
         match self.programs.iter().find(|&x| x.name == program.name) {
-            Some(elem) => return Err(
-                AppError::Program(
-                    format!("Program with such name already exists '{}'. Remove it first or use a custom tag with -t (--tag) option", program.name).to_string()
-                )
-            ),
+            Some(elem) => {
+                return Err(AppError::Program(
+                    format!(
+                        "Program with such name already exists '{}'. Remove it first or use a \
+                         custom tag with -t (--tag) option",
+                        program.name
+                    )
+                    .to_string(),
+                ))
+            }
             None => (),
         };
 
@@ -175,8 +190,12 @@ impl Config {
     }
 
     pub fn remove(&mut self, program: &Program) -> AppResult<&Self> {
-        let program_idx = self.find(&program.name)
-            .ok_or(AppError::Program(format!("Can't find a program '{}'", program.name).to_string()))?.1;
+        let program_idx = self
+            .find(&program.name)
+            .ok_or(AppError::Program(
+                format!("Can't find a program '{}'", program.name).to_string(),
+            ))?
+            .1;
 
         self.programs.remove(program_idx);
         Ok(self)

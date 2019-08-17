@@ -1,8 +1,7 @@
-use crate::app::deb::Deb;
-use dockerfile::{Dockerfile, Arg, Copy, Cmd, Run, User, Env, Workdir};
+use super::{deb::Deb, Program};
+use dockerfile::{Cmd, Copy, Dockerfile, Env, Run, User, Workdir};
 use freedesktop_desktop_entry::{Application, DesktopEntry, DesktopType};
 use std::path::Path;
-use crate::Program;
 
 #[cfg(test)]
 use mocktopus::macros::*;
@@ -10,11 +9,9 @@ use mocktopus::macros::*;
 #[cfg_attr(test, mockable)]
 fn get_user() -> String {
     match std::env::var_os("USER") {
-        Some(os_string) =>  {
-            match os_string.as_os_str().to_str() {
-                Some(user) => user.to_string(),
-                _ => "default".to_string(),
-            }
+        Some(os_string) => match os_string.as_os_str().to_str() {
+            Some(user) => user.to_string(),
+            _ => "default".to_string(),
         },
         _ => "default".to_string(),
     }
@@ -28,20 +25,22 @@ pub fn gen_dockerfile(deb: &Deb, program: &Program) -> String {
         .push(Run::new("apt-get update"));
 
     if let Some(d) = &deb.dependencies {
-        dockerfile = dockerfile.push(Run::new(
-            format!("apt-get install -y {}; exit 0", d.replace(&[','][..], "")))
-        );
+        dockerfile = dockerfile.push(Run::new(format!(
+            "apt-get install -y {}; exit 0",
+            d.replace(&[','][..], "")
+        )));
     }
 
     if let Some(d) = &program.deps {
-        dockerfile = dockerfile.push(Run::new(
-            format!("apt-get install -y {}", d))
-        );
+        dockerfile = dockerfile.push(Run::new(format!("apt-get install -y {}", d)));
     }
 
     return dockerfile
         .push(Run::new("dpkg -i /data/application.deb || true"))
-        .push(Run::new("apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser"))
+        .push(Run::new(
+            "apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && \
+             useradd $informuser",
+        ))
         .push(User::new("$informuser"))
         .push(Env::new("HOME /home/$informuser"))
         .push(Cmd::new(program.command.to_owned()))
@@ -49,7 +48,11 @@ pub fn gen_dockerfile(deb: &Deb, program: &Program) -> String {
         .to_string();
 }
 
-pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(name: T, description: S, icon: &Path) -> String {
+pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(
+    name: T,
+    description: S,
+    icon: &Path,
+) -> String {
     let name = name.into();
     let exec = format!("{} run {}", env!("CARGO_PKG_NAME"), name);
 
@@ -62,16 +65,15 @@ pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(name: T, description:
                 .startup_notify(),
         ),
     )
-        .comment(&description.into())
-        .generic_name(&name)
-        .to_string()
+    .comment(&description.into())
+    .generic_name(&name)
+    .to_string()
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use mocktopus::mocking::MockResult;
-    use mocktopus::mocking::Mockable;
+    use mocktopus::mocking::{MockResult, Mockable};
 
     #[test]
     fn test_gen_dockerfile() {
@@ -79,24 +81,26 @@ mod tests {
 
         let dockerfile = gen_dockerfile(&get_deb(), &get_program());
 
-        assert_eq!(dockerfile, "\
-            FROM debian:9-slim\n\
-            ENV informuser=user\n\
-            WORKDIR /data\n\
-            COPY tmp.deb /data/application.deb\n\
-            RUN apt-get update\n\
-            RUN apt-get install -y foo bar; exit 0\n\
-            RUN apt-get install -y baz qux\n\
-            RUN dpkg -i /data/application.deb || true\n\
-            RUN apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && useradd $informuser\n\
-            USER $informuser\n\
-            ENV HOME /home/$informuser\n\
-            CMD foobar\n"
+        assert_eq!(
+            dockerfile,
+            "\
+            FROM debian:9-slim\nENV informuser=user\nWORKDIR /data\nCOPY tmp.deb \
+             /data/application.deb\nRUN apt-get update\nRUN apt-get install -y foo bar; exit \
+             0\nRUN apt-get install -y baz qux\nRUN dpkg -i /data/application.deb || true\nRUN \
+             apt-get install -y -f --no-install-recommends && rm -rf /var/lib/apt/lists/* && \
+             useradd $informuser\nUSER $informuser\nENV HOME /home/$informuser\nCMD foobar\n"
         )
     }
 
     fn get_program() -> Program {
-        Program::new("foobar".to_string(), Path::new(""), &vec![], &None, &None, &Some("baz qux".to_string()))
+        Program::new(
+            "foobar".to_string(),
+            Path::new(""),
+            &vec![],
+            &None,
+            &None,
+            &Some("baz qux".to_string()),
+        )
     }
 
     fn get_deb() -> Deb {
@@ -112,7 +116,7 @@ mod tests {
             section: None,
             priority: None,
             homepage: None,
-            description: None
+            description: None,
         }
     }
 }

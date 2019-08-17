@@ -1,31 +1,32 @@
 #[macro_use]
 extern crate clap;
-extern crate xdg;
 extern crate dirs;
+extern crate xdg;
 
 use clap::{App, Shell};
-use std::path::Path;
-use std::error::Error;
+use std::{error::Error, path::Path};
 
 fn main() {
     source_bashrc().unwrap_or_else(|err| {
         println!("Can not install autocompletion: {}", err.to_string());
-        println!("You can do it manually by including generated {}.<shell-extension> to your profile config", env!("CARGO_PKG_NAME"));
+        println!(
+            "You can do it manually by including generated {}.<shell-extension> to your profile \
+             config",
+            env!("CARGO_PKG_NAME")
+        );
         println!("If there are no such file, contact me pls.");
     });
 }
 
 fn source_bashrc() -> Result<(), Box<dyn Error>> {
-    let config_path = xdg::BaseDirectories::with_prefix(env!("CARGO_PKG_NAME"))?
-        .get_config_home();
+    let config_path = xdg::BaseDirectories::with_prefix(env!("CARGO_PKG_NAME"))?.get_config_home();
     let yaml = load_yaml!("./config/cli.yaml");
     let result = std::panic::catch_unwind(|| {
-        App::from_yaml(yaml)
-            .gen_completions(
-                env!("CARGO_PKG_NAME"),
-                Shell::Bash,
-                config_path.as_os_str().to_owned()
-            );
+        App::from_yaml(yaml).gen_completions(
+            env!("CARGO_PKG_NAME"),
+            Shell::Bash,
+            config_path.as_os_str().to_owned(),
+        );
     });
 
     if let Err(err) = result {

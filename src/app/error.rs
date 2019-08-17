@@ -13,10 +13,18 @@ impl std::error::Error for AppError {
 
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            AppError::Docker => "Cannot connect to docker daemon",
-            AppError::File(error) => Box::leak(format!("IO errors occured: {}", error).into_boxed_str()),
-            AppError::Program(error) => Box::leak(format!("Program errors occured: {}", error).into_boxed_str()),
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                AppError::Docker => "Cannot connect to docker daemon",
+                AppError::File(error) => {
+                    Box::leak(format!("IO errors occured: {}", error).into_boxed_str())
+                }
+                AppError::Program(error) => {
+                    Box::leak(format!("Program errors occured: {}", error).into_boxed_str())
+                }
+            }
+        )
     }
 }

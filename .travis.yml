@@ -7,7 +7,10 @@ rust:
 matrix:
   fast_finish: true
 
+before_script:
+  - rustup component add rustfmt
+
 script:
   - cargo build
   - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then cargo test; fi
-
+  - if [ "$TRAVIS_RUST_VERSION" = "nightly" ]; then cargo fmt --all -- --check; fi

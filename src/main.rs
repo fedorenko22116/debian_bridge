@@ -1,13 +1,17 @@
-#[macro_use] extern crate clap;
-#[macro_use] extern crate log;
+#[macro_use]
+extern crate clap;
+#[macro_use]
+extern crate log;
 extern crate xdg;
 
-use debian_bridge::{App as Wrapper, Config, Program, Feature, System, Icon};
 use clap::{App, AppSettings, ArgMatches};
-use std::path::{Path, PathBuf};
-use std::net::IpAddr;
-use std::str::FromStr;
-use std::error::Error;
+use debian_bridge::{App as Wrapper, Config, Feature, Icon, Program, System};
+use std::{
+    error::Error,
+    net::IpAddr,
+    path::{Path, PathBuf},
+    str::FromStr,
+};
 
 fn main() -> Result<(), Box<dyn Error>> {
     if !cfg!(target_os = "linux") {
@@ -37,14 +41,16 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     info!("Logger configured: debug level: {}", debug_level);
 
-    let config_path = matches.value_of("config").map(|c| std::fs::canonicalize(c).unwrap()).unwrap_or(
-        xdg::BaseDirectories::with_prefix(&package_name)?.place_config_file("config.json")?
-    );
+    let config_path = matches
+        .value_of("config")
+        .map(|c| std::fs::canonicalize(c).unwrap())
+        .unwrap_or(
+            xdg::BaseDirectories::with_prefix(&package_name)?.place_config_file("config.json")?,
+        );
 
     info!("Configuration path: {}", config_path.to_str().unwrap());
 
-    let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?
-        .place_cache_file("")?;
+    let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?.place_cache_file("")?;
 
     info!("Cache path: {}", cache_path.to_str().unwrap());
 
@@ -59,7 +65,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         Some("test") => {
             println!("System settings: {}", system);
             println!("Available features: {}", app.features);
-        },
+        }
         Some("create") => {
             app.create(
                 get_create_package(&matches).as_path(),
@@ -69,33 +75,35 @@ fn main() -> Result<(), Box<dyn Error>> {
                 &get_create_deps(&matches),
             )?;
             info!("Program successfuly created");
-        },
+        }
         Some("run") => {
             app.run(
                 matches
-                    .subcommand_matches("run").unwrap()
-                    .value_of(&"name").unwrap()
+                    .subcommand_matches("run")
+                    .unwrap()
+                    .value_of(&"name")
+                    .unwrap(),
             )?;
-        },
+        }
         Some("remove") => {
             app.remove(
                 matches
-                    .subcommand_matches("remove").unwrap()
-                    .value_of(&"name").unwrap()
+                    .subcommand_matches("remove")
+                    .unwrap()
+                    .value_of(&"name")
+                    .unwrap(),
             )?;
             info!("Program successfuly removed");
-        },
+        }
         Some("list") => {
             let list = app.list().join(", ");
 
             match list.as_str() {
                 "" => println!("No program added yet"),
-                list => println!("Available programs list: {}", list)
+                list => println!("Available programs list: {}", list),
             }
-        },
-        _ => {
-            unreachable!()
-        },
+        }
+        _ => unreachable!(),
     }
 
     info!("Subcommand processing finished");
@@ -112,15 +120,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
     let mut features = vec![];
 
-    if matches.subcommand_matches("create").unwrap().is_present("display") {
+    if matches
+        .subcommand_matches("create")
+        .unwrap()
+        .is_present("display")
+    {
         features.push(Feature::Display);
     }
 
-    if matches.subcommand_matches("create").unwrap().is_present("sound") {
+    if matches
+        .subcommand_matches("create")
+        .unwrap()
+        .is_present("sound")
+    {
         features.push(Feature::Sound);
     }
 
-    if matches.subcommand_matches("create").unwrap().is_present("home") {
+    if matches
+        .subcommand_matches("create")
+        .unwrap()
+        .is_present("home")
+    {
         features.push(Feature::HomePersistent);
     }
 
@@ -130,21 +150,26 @@ fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
 fn get_create_package(matches: &ArgMatches) -> PathBuf {
     std::fs::canonicalize(Path::new(
         matches
-            .subcommand_matches("create").unwrap()
-            .value_of(&"package").unwrap(),
-    )).unwrap()
+            .subcommand_matches("create")
+            .unwrap()
+            .value_of(&"package")
+            .unwrap(),
+    ))
+    .unwrap()
 }
 
 fn get_create_command(matches: &ArgMatches) -> Option<String> {
-        matches
-            .subcommand_matches("create").unwrap()
-            .value_of(&"command")
-            .map(|s| s.to_string())
+    matches
+        .subcommand_matches("create")
+        .unwrap()
+        .value_of(&"command")
+        .map(|s| s.to_string())
 }
 
 fn get_create_deps(matches: &ArgMatches) -> Option<String> {
     matches
-        .subcommand_matches("create").unwrap()
+        .subcommand_matches("create")
+        .unwrap()
         .value_of(&"dependencies")
         .map(|s| s.to_string())
 }

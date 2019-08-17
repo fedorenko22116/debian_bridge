@@ -1,6 +1,6 @@
 #[derive(Debug, Clone)]
 pub enum SystemError {
-    DockerConnection
+    DockerConnection,
 }
 
 impl std::error::Error for SystemError {
@@ -11,8 +11,12 @@ impl std::error::Error for SystemError {
 
 impl std::fmt::Display for SystemError {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            SystemError::DockerConnection => "Cannot connect to docker daemon",
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                SystemError::DockerConnection => "Cannot connect to docker daemon",
+            }
+        )
     }
 }

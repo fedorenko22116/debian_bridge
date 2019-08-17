@@ -1,25 +1,22 @@
-pub mod error;
 mod config;
 mod deb;
-mod util;
 mod docker;
+pub mod error;
+mod util;
 
-pub use config::{Config, Program, Feature, Icon};
-use std::path::{Path, PathBuf};
-use std::net::IpAddr;
-use std::error::Error;
-use std::collections::HashMap;
-use std::fmt::{Display, Formatter};
-use std::ffi::OsStr;
-use colorful::Color;
-use colorful::Colorful;
-use colorful::core::StrMarker;
-use shiplift::Docker;
-use deb::Deb;
-use error::AppError;
-use docker::DockerFacade;
-use crate::sys::driver::Driver;
 use crate::System;
+use colorful::{core::StrMarker, Color, Colorful};
+pub use config::{Config, Feature, Icon, Program};
+use deb::Deb;
+use docker::DockerFacade;
+use error::AppError;
+use shiplift::Docker;
+use std::{
+    collections::HashMap,
+    fmt::{Display, Formatter},
+    net::IpAddr,
+    path::{Path, PathBuf},
+};
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
@@ -36,7 +33,7 @@ impl FeaturesList {
         list.insert(Feature::HomePersistent, true);
         list.insert(Feature::Notification, true);
 
-        Self {list}
+        Self { list }
     }
 }
 
@@ -45,10 +42,15 @@ impl Display for FeaturesList {
         writeln!(f, "\n");
 
         for (feature, available) in &self.list {
-            writeln!(f, "\t{:<15} ===> {}", format!("{}", feature), match available {
-                true => "available".color(Color::Green),
-                false => "unavailable".color(Color::Red),
-            });
+            writeln!(
+                f,
+                "\t{:<15} ===> {}",
+                format!("{}", feature),
+                match available {
+                    true => "available".color(Color::Green),
+                    false => "unavailable".color(Color::Red),
+                }
+            );
         }
 
         Ok(())
@@ -65,7 +67,9 @@ pub struct App<'a> {
 
 impl<'a> App<'a> {
     pub fn list(&self) -> Vec<String> {
-        self.config.programs.iter()
+        self.config
+            .programs
+            .iter()
             .map(|program| (&program).get_name_short().to_owned())
             .collect::<Vec<String>>()
             .to_vec()
@@ -75,7 +79,8 @@ impl<'a> App<'a> {
         let program = match self.config.find(program.into()) {
             Some(p) => p,
             None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
-        }.0;
+        }
+        .0;
 
         self.docker.delete(&program)?;
         self.config.remove(&program)?;
@@ -101,7 +106,7 @@ impl<'a> App<'a> {
         settings: &Vec<Feature>,
         icon: &Option<Icon>,
         cmd: &Option<String>,
-        deps: &Option<String>
+        deps: &Option<String>,
     ) -> Result<&Self, Box<dyn Error>> {
         let deb = Deb::try_new(app_path)?;
         let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd, &deps);
@@ -129,11 +134,15 @@ impl<'a> App<'a> {
             let entry = util::gen_desktop_entry(
                 &deb.package,
                 &deb.description.unwrap_or("Application".to_string()),
-                &icon.path
+                &icon.path,
             );
             let mut path = dirs::desktop_dir().unwrap();
 
-            debug!("Generated new entry in '{}':\n{}", path.to_str().unwrap(), entry);
+            debug!(
+                "Generated new entry in '{}':\n{}",
+                path.to_str().unwrap(),
+                entry
+            );
 
             if !path.exists() {
                 std::fs::create_dir(&path)?;
@@ -148,8 +157,11 @@ impl<'a> App<'a> {
     }
 
     pub fn run<T: Into<String>>(&self, program: T) -> Result<&Self, Box<dyn Error>> {
-        let program = self.config.find(program)
-            .ok_or(AppError::Program("Program not found".to_string()))?.0;
+        let program = self
+            .config
+            .find(program)
+            .ok_or(AppError::Program("Program not found".to_string()))?
+            .0;
 
         self.docker.run(&program)?;
         Ok(self)
@@ -161,7 +173,13 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
-    pub fn new<T: Into<String>>(prefix: T, cache_path: &Path, config: &Config, system: &'a System, docker: &'a Docker) -> Self {
+    pub fn new<T: Into<String>>(
+        prefix: T,
+        cache_path: &Path,
+        config: &Config,
+        system: &'a System,
+        docker: &'a Docker,
+    ) -> Self {
         let prefix = prefix.into();
 
         App {
@@ -169,7 +187,7 @@ impl<'a> App<'a> {
             config: config.to_owned(),
             docker: DockerFacade::new(docker, system, prefix, cache_path),
             cache_path: cache_path.to_owned(),
-            features: FeaturesList::new(&system)
+            features: FeaturesList::new(&system),
         }
     }
 }

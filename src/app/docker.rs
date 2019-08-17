@@ -1,15 +1,14 @@
-use shiplift::{Docker, BuildOptions};
-use tokio::{prelude::Future, runtime::Runtime};
-use tokio::prelude::{Stream};
-use std::error::Error;
-use std::path::{PathBuf, Path};
-use crate::{Program, Feature, System};
-use crate::app::deb::Deb;
-use crate::app::error::AppError;
-use shiplift::rep::ContainerCreateInfo;
-use shiplift::tty::StreamType;
-use std::process::{Command, Stdio};
+use super::{error::AppError, Feature, Program, System};
 use colorful::core::StrMarker;
+use shiplift::{BuildOptions, Docker};
+use std::{
+    path::{Path, PathBuf},
+    process::{Command, Stdio},
+};
+use tokio::{
+    prelude::{Future, Stream},
+    runtime::Runtime,
+};
 
 type AppResult<T> = Result<T, AppError>;
 
@@ -21,7 +20,12 @@ pub struct DockerFacade<'a> {
 }
 
 impl<'a> DockerFacade<'a> {
-    pub fn new<T: Into<String>>(docker: &'a Docker, system: &'a System, prefix: T, cache_path: &Path) -> Self {
+    pub fn new<T: Into<String>>(
+        docker: &'a Docker,
+        system: &'a System,
+        prefix: T,
+        cache_path: &Path,
+    ) -> Self {
         DockerFacade {
             docker,
             system,
@@ -31,17 +35,18 @@ impl<'a> DockerFacade<'a> {
     }
 
     pub fn delete(&mut self, program: &Program) -> AppResult<&Self> {
-        let fut = self.docker
+        let fut = self
+            .docker
             .images()
             .get(&program.get_name(&self.prefix))
             .delete();
         let mut rt = Runtime::new().unwrap();
 
         rt.block_on(fut).map_err(|err| {
-                error!("{}", err.to_string());
-                AppError::Docker
-            })?;
-        rt.shutdown_now().wait();
+            error!("{}", err.to_string());
+            AppError::Docker
+        })?;
+        rt.shutdown_now().wait().map_err(|err| AppError::Docker)?;
 
         Ok(self)
     }
@@ -51,24 +56,25 @@ impl<'a> DockerFacade<'a> {
 
         info!("Image name: {}", tag);
 
-        let fut = self.docker
+        let fut = self
+            .docker
             .images()
             .build(
-                &BuildOptions::builder(
-                    self.cache_path.as_os_str().to_str().unwrap()
-                ).tag(&tag).build()
+                &BuildOptions::builder(self.cache_path.as_os_str().to_str().unwrap())
+                    .tag(&tag)
+                    .build(),
             )
             .for_each(|output| {
-                debug!("{}", output);
+                info!("{}", output);
                 Ok(())
             });
         let mut rt = Runtime::new().unwrap();
 
         rt.block_on(fut).map_err(|err| {
-                error!("{}", err.to_string());
-                AppError::Docker
-            })?;
-        rt.shutdown_now().wait();
+            error!("{}", err.to_string());
+            AppError::Docker
+        })?;
+        rt.shutdown_now().wait().map_err(|err| AppError::Docker)?;
 
         Ok(self)
     }
@@ -76,15 +82,24 @@ impl<'a> DockerFacade<'a> {
     //TODO: add more options and rewrite with docker API if possible
     pub fn run(&self, program: &Program) -> AppResult<&Self> {
         let home = std::env::var_os("HOME")
-            .unwrap().to_str().unwrap().to_string();
+            .unwrap()
+            .to_str()
+            .unwrap()
+            .to_string();
         let cmd_name = program.get_name(&self.prefix);
         let home_volume = format!("{}:{}", home, home);
         let mut args = vec![
-            "run", "-ti", "--net=host", "--rm",
-            "-v", "/dev/shm:/dev/shm",
-            "-v", "/etc/machine-id:/etc/machine-id",
-            "-v", "/var/lib/dbus:/var/lib/dbus",
-            "--privileged"
+            "run",
+            "-ti",
+            "--net=host",
+            "--rm",
+            "-v",
+            "/dev/shm:/dev/shm",
+            "-v",
+            "/etc/machine-id:/etc/machine-id",
+            "-v",
+            "/var/lib/dbus:/var/lib/dbus",
+            "--privileged",
         ];
 
         if program.settings.contains(&Feature::Display) {
@@ -113,7 +128,10 @@ impl<'a> DockerFacade<'a> {
             .spawn()
             .map_err(|err| AppError::Docker)?;
 
-        let status = cmd.wait();
+        let status = cmd.wait().map_err(|err| {
+            error!("{}", err.to_string());
+            AppError::Docker
+        })?;
 
         info!("Exited with status {:?}", status);
 

@@ -3,7 +3,7 @@ use std::fmt::{Display, Formatter, Result};
 #[derive(Clone)]
 pub enum WindowManager {
     X11,
-    Wayland
+    Wayland,
 }
 
 impl Display for WindowManager {
@@ -17,7 +17,7 @@ impl Display for WindowManager {
     }
 }
 
-impl Driver for WindowManager { }
+impl Driver for WindowManager {}
 
 #[derive(Clone)]
 pub enum SoundDriver {
@@ -36,11 +36,11 @@ impl Display for SoundDriver {
     }
 }
 
-impl Driver for SoundDriver { }
+impl Driver for SoundDriver {}
 
 #[derive(Clone)]
 pub enum PrinterDriver {
-    Default
+    Default,
 }
 
 impl Display for PrinterDriver {
@@ -49,11 +49,11 @@ impl Display for PrinterDriver {
     }
 }
 
-impl Driver for PrinterDriver { }
+impl Driver for PrinterDriver {}
 
 #[derive(Clone)]
 pub enum WebCamDriver {
-    Default
+    Default,
 }
 
 impl Display for WebCamDriver {
@@ -62,7 +62,7 @@ impl Display for WebCamDriver {
     }
 }
 
-impl Driver for WebCamDriver { }
+impl Driver for WebCamDriver {}
 
 #[derive(Clone)]
 pub struct DockerVersion(pub String);
@@ -73,6 +73,6 @@ impl Display for DockerVersion {
     }
 }
 
-impl Driver for DockerVersion { }
+impl Driver for DockerVersion {}
 
-pub trait Driver : Display + Clone { }
+pub trait Driver: Display + Clone {}
