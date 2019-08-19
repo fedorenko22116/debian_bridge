@@ -80,8 +80,8 @@ impl Display for System {
     fn fmt(&self, f: &mut Formatter) -> std::fmt::Result {
         writeln!(
             f,
-            "\n\n\tDocker version ===> {docker_version}\n\tWindow manager ===> \
-             {window_manager}\n\tSound driver   ===> {sound_driver}\n",
+            "\n\n\tDocker version  ===> {docker_version}\n\tWindow manager  ===> \
+             {window_manager}\n\tSound driver    ===> {sound_driver}",
             docker_version = DisplayOption(Some(self.docker_version.to_owned())),
             window_manager = DisplayOption(self.wm.to_owned()),
             sound_driver = DisplayOption(self.sd.to_owned()),

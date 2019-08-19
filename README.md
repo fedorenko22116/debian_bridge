@@ -54,18 +54,18 @@ Tested on Solus 3 OS (Budgie with X11 WM) with rocketchat_2.15.3.deb
 $ debian_bridge test
 System settings: 
 
-	Docker version ===> 1.40
-	Window manager ===> X11
-	Sound driver   ===> PulseAudio
+	Docker version  ===> 1.40
+	Window manager  ===> X11
+	Sound driver    ===> PulseAudio
 
 Available features: 
 
-	Sound          ===> available
-	Devices        ===> available
-	Timezone       ===> available
-	Display        ===> available
-	Notification   ===> available
-
+	Notification    ===> available
+	Home persistent ===> available
+	Timezone        ===> available
+	Display         ===> available
+	Devices         ===> available
+	Sound           ===> available
 ```
 
 ### Creating an application
@@ -77,7 +77,7 @@ $ debian_bridge create -dshnti --dependencies 'libasound2' --command 'rocketchat
 Fine, `rocketchat` application created with a shared `display`, `sound`, `notifications`, `timezone`, `devices` and `home` directory. All required dependencies for `rocketchat` were automatically installed. 
 Additional libs like `libasound2` which are not specified in .deb package can be added with `dependencies` argument. \
 By default package name will be used as a command, but it's not a case with a `rocketchat`, so command name (`rocketchat-desktop`) was additionaly passed.\
-Also a .desktop entry was created in `$HOME/.desktop` (More options will be added later)
+Also a .desktop entry was created in `$HOME/Desktop` (More options will be added later)
 
 ### Listing
 
