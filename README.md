@@ -45,7 +45,7 @@ SUBCOMMANDS:
 
 ## Example
 
-Tested on Solus 3 OS (Budgie WM) with rocketchat_2.15.3.deb
+Tested on Solus 3 OS (Budgie with X11 WM) with rocketchat_2.15.3.deb
 
 ### Check if your system has a support of features
 

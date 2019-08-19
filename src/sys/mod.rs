@@ -48,18 +48,18 @@ impl System {
         rt.shutdown_now()
             .wait()
             .map_err(|err| SystemError::DockerConnection)?;
+
         result
     }
 
     fn get_window_manager() -> Option<WindowManager> {
-        match std::env::var_os("XDG_SESSION_TYPE") {
-            Some(os_string) => match os_string.as_os_str().to_str() {
+        std::env::var_os("XDG_SESSION_TYPE")
+            .map(|os_string| match os_string.as_os_str().to_str() {
                 Some("x11") => Some(WindowManager::X11),
                 Some("wayland") => Some(WindowManager::Wayland),
-                _ => None,
-            },
-            _ => None,
-        }
+                _ => return None,
+            })
+            .unwrap()
     }
 
     fn get_sound_driver() -> Option<SoundDriver> {
@@ -73,13 +73,10 @@ impl System {
             .stdout(Stdio::null())
             .status();
 
-        match pulse {
-            Ok(_) => Some(SoundDriver::PulseAudio),
-            _ => match alsa {
-                Ok(_) => Some(SoundDriver::Alsa),
-                _ => None,
-            },
-        }
+        pulse
+            .ok()
+            .map(|o| SoundDriver::PulseAudio)
+            .or(alsa.ok().map(|o| SoundDriver::Alsa))
     }
 
     fn get_printer_driver() -> Option<PrinterDriver> {
