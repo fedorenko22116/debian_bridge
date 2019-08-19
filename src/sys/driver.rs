@@ -39,32 +39,6 @@ impl Display for SoundDriver {
 impl Driver for SoundDriver {}
 
 #[derive(Clone)]
-pub enum PrinterDriver {
-    Default,
-}
-
-impl Display for PrinterDriver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", "Default driver installed")
-    }
-}
-
-impl Driver for PrinterDriver {}
-
-#[derive(Clone)]
-pub enum WebCamDriver {
-    Default,
-}
-
-impl Display for WebCamDriver {
-    fn fmt(&self, f: &mut Formatter<'_>) -> Result {
-        write!(f, "{}", "Default driver installed")
-    }
-}
-
-impl Driver for WebCamDriver {}
-
-#[derive(Clone)]
 pub struct DockerVersion(pub String);
 
 impl Display for DockerVersion {

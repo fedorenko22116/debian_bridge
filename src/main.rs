@@ -156,6 +156,14 @@ fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
         features.push(Feature::Time);
     }
 
+    if matches
+        .subcommand_matches("create")
+        .unwrap()
+        .is_present("devices")
+    {
+        features.push(Feature::Devices);
+    }
+
     features
 }
 

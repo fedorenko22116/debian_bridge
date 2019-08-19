@@ -41,8 +41,7 @@ pub enum Feature {
     Display,
     Sound,
     Notification,
-    Webcam,
-    Printer,
+    Devices,
     HomePersistent,
     Time,
 }
@@ -56,8 +55,7 @@ impl Display for Feature {
                 Feature::Display => "Display",
                 Feature::Sound => "Sound",
                 Feature::Notification => "Notification",
-                Feature::Webcam => "Webcam (not implemented yet)",
-                Feature::Printer => "Printer (not implemented yet)",
+                Feature::Devices => "Devices",
                 Feature::HomePersistent => "Home persistent",
                 Feature::Time => "Timezone",
             }

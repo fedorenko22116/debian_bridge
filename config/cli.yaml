@@ -5,13 +5,13 @@ args:
       short: c
       long: config
       value_name: FILE
-      help: Sets a custom config file
+      help: Set a custom config file
       takes_value: true
 
   - verbose:
       short: v
       multiple: true
-      help: Sets the level of verbosity
+      help: Set the level of verbosity
 
 subcommands:
   - run:
@@ -76,3 +76,7 @@ subcommands:
             short: t
             long: timezone
             help: Share local timezone
+        - devices:
+            short: i
+            long: devices
+            help: Enable devices

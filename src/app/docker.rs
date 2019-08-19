@@ -103,30 +103,28 @@ impl<'a> DockerFacade<'a> {
         ];
 
         if program.settings.contains(&Feature::Display) {
-            args.push("-v");
-            args.push("/tmp/.X11-unix:/tmp/.X11-unix");
-            args.push("--env");
-            args.push("DISPLAY");
+            args.push_volume("/tmp/.X11-unix:/tmp/.X11-unix")
+                .push_env("DISPLAY");
         }
 
         if program.settings.contains(&Feature::Sound) {
-            args.push("-v");
-            args.push("/dev/snd:/dev/snd");
+            args.push_volume("/dev/snd:/dev/snd");
         }
 
         if program.settings.contains(&Feature::HomePersistent) {
-            args.push("-v");
-            args.push(&home_volume);
+            args.push_volume(&home_volume);
         }
 
         if program.settings.contains(&Feature::Time) {
-            args.push("-v");
-            args.push("/etc/localtime:/etc/localtime");
+            args.push_volume("/etc/localtime:/etc/localtime");
         }
 
         if program.settings.contains(&Feature::Notification) {
-            args.push("-v");
-            args.push("/var/lib/dbus:/var/lib/dbus");
+            args.push_volume("/var/lib/dbus:/var/lib/dbus");
+        }
+
+        if program.settings.contains(&Feature::Devices) {
+            args.push_volume("/dev:/dev");
         }
 
         args.push(&cmd_name);
@@ -146,5 +144,24 @@ impl<'a> DockerFacade<'a> {
         info!("Exited with status {:?}", status);
 
         Ok(self)
+    }
+}
+
+trait PushArgument<T: Into<String>> {
+    fn push_volume(&mut self, v: T) -> &mut Self;
+    fn push_env(&mut self, v: T) -> &mut Self;
+}
+
+impl<'a> PushArgument<&'a str> for Vec<&'a str> {
+    fn push_volume(&mut self, v: &'a str) -> &mut Self {
+        self.push("-v");
+        self.push(v);
+        self
+    }
+
+    fn push_env(&mut self, v: &'a str) -> &mut Self {
+        self.push("--env");
+        self.push(v);
+        self
     }
 }

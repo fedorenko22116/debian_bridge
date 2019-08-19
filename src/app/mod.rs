@@ -10,6 +10,7 @@ pub use config::{Config, Feature, Icon, Program};
 use deb::Deb;
 use docker::DockerFacade;
 use error::AppError;
+use serde_json::to_string;
 use shiplift::Docker;
 use std::{
     collections::HashMap,
@@ -19,25 +20,31 @@ use std::{
     path::{Path, PathBuf},
 };
 
-type AppResult<T> = Result<T, Box<dyn Error>>;
+type AppResult<T> = Result<T, AppError>;
 
 pub struct FeaturesList {
     list: HashMap<Feature, bool>,
 }
 
 impl FeaturesList {
-    pub fn new(system: &System) -> Self {
+    fn new(system: &System) -> Self {
         let mut list = HashMap::new();
 
         list.insert(Feature::Display, system.wm.is_some());
         list.insert(Feature::Sound, system.sd.is_some());
-        list.insert(Feature::Webcam, system.wcm.is_some());
-        list.insert(Feature::Printer, system.pd.is_some());
-        list.insert(Feature::HomePersistent, true);
+        list.insert(Feature::Devices, true);
         list.insert(Feature::Notification, true);
         list.insert(Feature::Time, true);
+        list.insert(Feature::HomePersistent, true);
 
         Self { list }
+    }
+
+    fn validate(&self, settings: &Vec<Feature>) -> bool {
+        settings
+            .iter()
+            .try_for_each(|f| self.list.get(f).map(|_i| ()).ok_or(()))
+            .is_ok()
     }
 }
 
@@ -48,7 +55,7 @@ impl Display for FeaturesList {
         for (feature, available) in &self.list {
             writeln!(
                 f,
-                "\t{:<30} ===> {}",
+                "\t{:<14} ===> {}",
                 format!("{}", feature),
                 match available {
                     true => "available".color(Color::Green),
@@ -80,11 +87,11 @@ impl<'a> App<'a> {
     }
 
     pub fn remove<T: Into<String>>(&mut self, program: T) -> AppResult<&Self> {
-        let program = match self.config.find(program.into()) {
-            Some(p) => p,
-            None => return Err(AppError::Program("Input program doesn't exist".to_str()).into()),
-        }
-        .0;
+        let program = self
+            .config
+            .find(program.into())
+            .ok_or(AppError::Program("Input program doesn't exist".to_str()))?
+            .0;
 
         self.docker.delete(&program)?;
         self.config.remove(&program)?;
@@ -112,12 +119,18 @@ impl<'a> App<'a> {
         cmd: &Option<String>,
         deps: &Option<String>,
     ) -> AppResult<&Self> {
+        if !self.features.validate(&settings) {
+            return Err(AppError::Program(
+                "You have set unavailable feature".to_string(),
+            ));
+        }
+
         let deb = Deb::try_new(app_path)?;
         let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd, &deps);
         let mut app_tmp_path = self.cache_path.to_owned();
         app_tmp_path.push(Path::new("tmp.deb"));
 
-        std::fs::copy(app_path, &app_tmp_path);
+        std::fs::copy(app_path, &app_tmp_path).map_err(|err| AppError::File(err.to_string()))?;
 
         let mut dockerfile = util::gen_dockerfile(&deb, &program)?;
 
@@ -126,44 +139,20 @@ impl<'a> App<'a> {
         let mut dockerfile_path = self.cache_path.to_owned();
         dockerfile_path.push(Path::new("Dockerfile"));
 
-        std::fs::write(&dockerfile_path, dockerfile)?;
+        std::fs::write(&dockerfile_path, dockerfile)
+            .map_err(|err| AppError::File(err.to_string()))?;
 
         self.config.push(&program)?;
         self.docker.create(&deb.package);
 
-        std::fs::remove_file(&dockerfile_path)?;
-        std::fs::remove_file(&app_tmp_path)?;
+        std::fs::remove_file(&dockerfile_path).map_err(|err| AppError::File(err.to_string()))?;
+        std::fs::remove_file(&app_tmp_path).map_err(|err| AppError::File(err.to_string()))?;
 
         if let Some(icon) = &icon {
-            let entry = util::gen_desktop_entry(
-                &deb.package,
-                &deb.description.unwrap_or("Application".to_string()),
-                &icon.path,
-            );
-
-            let entry = match entry {
-                Ok(res) => res,
-                Err(err) => {
-                    warn!("{}", err.to_string());
-                    return Ok(self);
-                }
-            };
-
-            let mut path = dirs::desktop_dir().unwrap();
-
-            debug!(
-                "Generated new entry in '{}':\n{}",
-                path.to_str().unwrap(),
-                entry
-            );
-
-            if !path.exists() {
-                std::fs::create_dir(&path)?;
-            }
-
-            path.push(format!("{}.desktop", deb.package));
-
-            std::fs::write(path, entry)?;
+            self.create_entry(&icon, &deb).unwrap_or_else(|err| {
+                warn!("{}", err.to_string());
+                &self
+            });
         }
 
         Ok(self)
@@ -202,5 +191,34 @@ impl<'a> App<'a> {
             cache_path: cache_path.to_owned(),
             features: FeaturesList::new(&system),
         }
+    }
+
+    fn create_entry(&self, icon: &Icon, deb: &Deb) -> AppResult<&Self> {
+        let entry = util::gen_desktop_entry(
+            &deb.package,
+            &deb.description
+                .to_owned()
+                .unwrap_or("Application".to_string()),
+            &icon.path,
+        );
+
+        let entry = entry.map_err(|err| AppError::File(err.to_string()))?;
+        let mut path = dirs::desktop_dir().unwrap();
+
+        debug!(
+            "Generated new entry in '{}':\n{}",
+            path.to_str().unwrap(),
+            entry
+        );
+
+        if !path.exists() {
+            std::fs::create_dir(&path).map_err(|err| AppError::File(err.to_string()))?;
+        }
+
+        path.push(format!("{}.desktop", deb.package));
+
+        std::fs::write(path, entry).map_err(|err| AppError::File(err.to_string()))?;
+
+        Ok(self)
     }
 }
