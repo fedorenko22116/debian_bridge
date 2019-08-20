@@ -43,7 +43,13 @@ impl FeaturesList {
     fn validate(&self, settings: &Vec<Feature>) -> bool {
         settings
             .iter()
-            .try_for_each(|f| self.list.get(f).map(|_i| ()).ok_or(()))
+            .try_for_each(|f| {
+                if !*self.list.get(f).ok_or(())? {
+                    Err(())
+                } else {
+                    Ok(())
+                }
+            })
             .is_ok()
     }
 }
