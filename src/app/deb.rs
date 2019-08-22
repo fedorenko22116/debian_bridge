@@ -1,8 +1,48 @@
 use super::error::AppError;
 use colorful::core::StrMarker;
+#[cfg(test)]
+use mocktopus::macros::*;
 use pipers::Pipe;
 use regex::Regex;
-use std::{ffi::OsStr, path::Path};
+use std::{convert::TryInto, ffi::OsStr, path::Path};
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Dependencies {
+    list: Vec<String>,
+}
+
+#[cfg_attr(test, mockable)]
+impl Dependencies {
+    pub fn new<T: Into<String>>(deps: T) -> Self {
+        let deps = deps.into();
+
+        Self {
+            list: Self::parse(deps),
+        }
+    }
+
+    fn parse(deps: String) -> Vec<String> {
+        let deps: Vec<String> = deps.split(",").map(|dep| dep.to_owned()).collect();
+
+        deps.iter()
+            .map(|dep| {
+                Self::split_first(
+                    Self::split_first(dep.to_owned(), "|".to_string()),
+                    "(".to_string(),
+                )
+            })
+            .collect()
+    }
+
+    fn split_first(dep: String, pat: String) -> String {
+        let parts: Vec<String> = dep.split(pat.as_str()).map(|dep| dep.to_owned()).collect();
+        parts.get(0).unwrap().trim().to_owned()
+    }
+
+    pub fn extract(&self) -> String {
+        self.list.join(" ")
+    }
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Deb {
@@ -13,7 +53,7 @@ pub struct Deb {
     pub architecture: Option<String>,
     pub maintainer: Option<String>,
     pub installed_size: Option<String>,
-    pub dependencies: Option<String>,
+    pub dependencies: Option<Dependencies>,
     pub section: Option<String>,
     pub priority: Option<String>,
     pub homepage: Option<String>,
@@ -50,7 +90,7 @@ impl Deb {
             architecture: Deb::parse_output(&output, "Architecture"),
             maintainer: Deb::parse_output(&output, "Maintainer"),
             installed_size: Deb::parse_output(&output, "Installed-Size"),
-            dependencies: Deb::parse_output(&output, "Depends"),
+            dependencies: Deb::parse_output(&output, "Depends").map(|o| Dependencies::new(o)),
             section: Deb::parse_output(&output, "Section"),
             priority: Deb::parse_output(&output, "Priority"),
             homepage: Deb::parse_output(&output, "Homepage"),
@@ -66,5 +106,30 @@ impl Deb {
         }
 
         None
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn dep_parses_success() {
+        let deps = Dependencies::new(
+            "git, libgconf-2-4 (>= 3.2.5) | libgconf2-4, libgtk-3-0 (>= 3.9.10),libgcrypt11 | \
+             libgcrypt20, libnotify4, libxtst6, libnss3 (>= 2:3.22), python, gvfs-bin, xdg-utils, \
+             libx11-xcb1, libxss1,libasound2 (>= 1.0.16), libxkbfile1, libcurl3 | libcurl4, \
+             policykit-1",
+        );
+
+        assert_eq!(
+            "git libgconf-2-4 libgtk-3-0 libgcrypt11 libnotify4 libxtst6 libnss3 python gvfs-bin \
+             xdg-utils libx11-xcb1 libxss1 libasound2 libxkbfile1 libcurl3 policykit-1",
+            deps.extract()
+        );
+
+        let deps = Dependencies::new("one_dep");
+
+        assert_eq!("one_dep", deps.extract());
     }
 }

@@ -25,7 +25,7 @@ subcommands:
 
   - remove:
       version: stable
-      about: Remove program, container, build
+      about: Remove program
       args:
         - name:
             required: true
@@ -34,7 +34,7 @@ subcommands:
 
   - list:
       version: stable
-      about: Show installed programs with their containers
+      about: Show installed programs
 
   - test:
       version: stable

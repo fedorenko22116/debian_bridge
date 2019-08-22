@@ -25,17 +25,15 @@ fn main() -> Result<(), Box<dyn Error>> {
         .get_matches();
 
     let debug_level = match matches.occurrences_of("verbose") {
-        0 => "error",
-        1 => "warn",
-        2 => "info",
-        3 => "debug",
-        4 | _ => "trace",
+        0 => "info",
+        1 => "debug",
+        2 | _ => "trace",
     };
 
     std::env::set_var("RUST_APP_LOG", &debug_level);
     pretty_env_logger::init_custom_env("RUST_APP_LOG");
 
-    info!("Logger configured: debug level: {}", debug_level);
+    debug!("Logger configured: debug level: {}", debug_level);
 
     let config_path = matches
         .value_of("config")
@@ -44,18 +42,18 @@ fn main() -> Result<(), Box<dyn Error>> {
             xdg::BaseDirectories::with_prefix(&package_name)?.place_config_file("config.json")?,
         );
 
-    info!("Configuration path: {}", config_path.to_str().unwrap());
+    debug!("Configuration path: {}", config_path.to_str().unwrap());
 
     let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?.place_cache_file("")?;
 
-    info!("Cache path: {}", cache_path.to_str().unwrap());
+    debug!("Cache path: {}", cache_path.to_str().unwrap());
 
     let docker = Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
     let mut app = Wrapper::new(&package_name, &cache_path, &config, &system, &docker);
 
-    info!("Subcommand processing...");
+    debug!("Subcommand processing...");
 
     match matches.subcommand_name() {
         Some("test") => {
@@ -102,11 +100,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         _ => unreachable!(),
     }
 
-    info!("Subcommand processing finished");
+    debug!("Subcommand processing finished");
 
     app.save(&config_path)?;
 
-    info!("Exit");
+    debug!("Exit");
 
     std::env::remove_var("RUST_APP_LOG");
 

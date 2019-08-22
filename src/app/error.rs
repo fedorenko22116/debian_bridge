@@ -1,6 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum AppError {
     Docker,
+    DockerStatus(i16),
     File(String),
     Program(String),
 }
@@ -18,6 +19,9 @@ impl std::fmt::Display for AppError {
             "{}",
             match self {
                 AppError::Docker => "Cannot connect to docker daemon",
+                AppError::DockerStatus(error) => {
+                    Box::leak(format!("Docker returned code: {}", error).into_boxed_str())
+                }
                 AppError::File(error) => {
                     Box::leak(format!("IO errors occured: {}", error).into_boxed_str())
                 }

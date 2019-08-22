@@ -1,9 +1,11 @@
 use super::{error::AppError, Feature, Program, System};
 use colorful::core::StrMarker;
-use shiplift::{BuildOptions, Docker};
+use serde_json::Value;
+use shiplift::{BuildOptions, ContainerListOptions, Docker};
 use std::{
     path::{Path, PathBuf},
     process::{Command, Stdio},
+    sync::{Arc, Mutex},
 };
 use tokio::{
     prelude::{Future, Stream},
@@ -34,17 +36,71 @@ impl<'a> DockerFacade<'a> {
         }
     }
 
-    pub fn delete(&mut self, program: &Program) -> AppResult<&Self> {
+    fn get_containers(&self, image: &String) -> AppResult<Vec<String>> {
+        let program_name = Arc::new(image.to_owned());
+
         let fut = self
             .docker
-            .images()
-            .get(&program.get_name(&self.prefix))
-            .delete();
+            .containers()
+            .list(&ContainerListOptions::builder().all().build())
+            .map(move |containers| {
+                containers
+                    .iter()
+                    .filter_map(|c| {
+                        if c.image.eq(&*program_name) {
+                            Some(c.id.to_owned())
+                        } else {
+                            None
+                        }
+                    })
+                    .collect()
+            })
+            .map_err(|_| ());
+
+        let mut rt = Runtime::new().unwrap();
+
+        let container_ids = match rt.block_on(fut) {
+            Ok(res) => Ok(res),
+            Err(err) => Err(AppError::Docker),
+        };
+
+        rt.shutdown_now().wait().map_err(|err| AppError::Docker)?;
+
+        container_ids
+    }
+
+    fn delete_container(&self, id: &String) -> AppResult<&Self> {
+        let fut = self
+            .docker
+            .containers()
+            .get(&id)
+            .delete()
+            .map_err(|_| AppError::Docker);
         let mut rt = Runtime::new().unwrap();
 
         rt.block_on(fut).map_err(|err| {
-            error!("{}", err.to_string());
+            warn!("{}", err.to_string());
             AppError::Docker
+        })?;
+        rt.shutdown_now().wait().map_err(|err| AppError::Docker)?;
+
+        Ok(self)
+    }
+
+    pub fn delete(&mut self, program: &Program) -> AppResult<&Self> {
+        let name = program.get_name(&self.prefix);
+        let containers_ids = self.get_containers(&name)?;
+
+        containers_ids
+            .iter()
+            .try_for_each(|id| self.delete_container(&id).map(|_| ()))?;
+
+        let fut = self.docker.images().get(&name).delete();
+        let mut rt = Runtime::new().unwrap();
+
+        rt.block_on(fut).map_err(|err| {
+            warn!("{}", err.to_string());
+            AppError::DockerStatus(404)
         })?;
         rt.shutdown_now().wait().map_err(|err| AppError::Docker)?;
 
@@ -65,7 +121,19 @@ impl<'a> DockerFacade<'a> {
                     .build(),
             )
             .for_each(|output| {
-                info!("{}", output);
+                let output = output.as_object().unwrap();
+
+                if output.contains_key("error") {
+                    error!("Docker output: {}", output.get("error").unwrap());
+                    return Err(shiplift::Error::InvalidResponse(
+                        "Failed to build an image".to_string(),
+                    ));
+                }
+
+                if output.contains_key("stream") {
+                    info!("Docker output: {}", output.get("stream").unwrap());
+                }
+
                 Ok(())
             });
         let mut rt = Runtime::new().unwrap();

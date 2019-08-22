@@ -4,7 +4,7 @@
 CLI tool to automatize creation and running an applications with debian using docker.
 
 ```
-debian_bridge 0.2.0
+debian_bridge 0.2.1
 victor <fedorenko22116@gmail.com>
 
 USAGE:
@@ -21,8 +21,8 @@ OPTIONS:
 SUBCOMMANDS:
     create    Create new docker build for existed package
     help      Prints this message or the help of the given subcommand(s)
-    list      Show installed programs with their containers
-    remove    Remove program, container, build
+    list      Show installed programs
+    remove    Remove program
     run       Run installed program
     test      Test compatibility and feature access
 

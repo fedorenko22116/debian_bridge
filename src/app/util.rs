@@ -57,7 +57,7 @@ pub fn gen_dockerfile(deb: &Deb, program: &Program) -> AppResult<String> {
     if let Some(d) = &deb.dependencies {
         dockerfile = dockerfile.push(Run::new(format!(
             "apt-get install -y {}; exit 0",
-            d.replace(&[','][..], "")
+            d.extract()
         )));
     }
 
@@ -117,11 +117,13 @@ pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::app::deb::Dependencies;
     use mocktopus::mocking::{MockResult, Mockable};
 
     #[rustfmt::skip::macros(assert_eq)]
     #[test]
     fn test_gen_dockerfile() {
+        Dependencies::extract.mock_safe(|_| MockResult::Return("foo bar".to_string()));
         get_user.mock_safe(|| MockResult::Return(Some("user".to_string())));
 
         let dockerfile = gen_dockerfile(&get_deb(), &get_program()).unwrap();
@@ -186,7 +188,7 @@ mod tests {
             architecture: None,
             maintainer: None,
             installed_size: None,
-            dependencies: Some("foo, bar".to_string()),
+            dependencies: Some(Dependencies::new(String::new())),
             section: None,
             priority: None,
             homepage: None,

@@ -99,7 +99,11 @@ impl<'a> App<'a> {
             .ok_or(AppError::Program("Input program doesn't exist".to_str()))?
             .0;
 
-        self.docker.delete(&program)?;
+        match self.docker.delete(&program) {
+            Ok(_) => (),
+            Err(AppError::DockerStatus(404)) => (),
+            Err(err) => return Err(err),
+        };
         self.config.remove(&program)?;
 
         if let Some(_) = program.icon {
@@ -149,7 +153,7 @@ impl<'a> App<'a> {
             .map_err(|err| AppError::File(err.to_string()))?;
 
         self.config.push(&program)?;
-        self.docker.create(&deb.package);
+        self.docker.create(&deb.package)?;
 
         std::fs::remove_file(&dockerfile_path).map_err(|err| AppError::File(err.to_string()))?;
         std::fs::remove_file(&app_tmp_path).map_err(|err| AppError::File(err.to_string()))?;
