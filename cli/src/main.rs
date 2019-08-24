@@ -5,7 +5,8 @@ extern crate log;
 extern crate xdg;
 
 use clap::{App, AppSettings, ArgMatches};
-use debian_bridge::{App as Wrapper, Config, Docker, Feature, Icon, Program, System};
+use debian_bridge::CommandMatcher;
+use debian_bridge_core::{App as Wrapper, Config, Docker, Feature, Icon, Program, System};
 use std::{
     error::Error,
     net::IpAddr,
@@ -48,6 +49,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     debug!("Cache path: {}", cache_path.to_str().unwrap());
 
+    let matcher = CommandMatcher::new(&matches);
     let docker = Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
@@ -62,11 +64,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         Some("create") => {
             app.create(
-                get_create_package(&matches).as_path(),
-                &get_create_features(&matches),
+                get_create_package(&matcher)?.as_path(),
+                &get_create_features(&matcher),
                 &Some(Icon::default()),
-                &get_create_command(&matches),
-                &get_create_deps(&matches),
+                &get_create_command(&matcher),
+                &get_create_deps(&matcher),
             )?;
             info!("Program successfuly created");
         }
@@ -111,83 +113,46 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
+fn get_create_features(matcher: &CommandMatcher) -> Vec<Feature> {
     let mut features = vec![];
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("display")
-    {
+    if matcher.is_option_present("create", "display") {
         features.push(Feature::Display);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("sound")
-    {
+    if matcher.is_option_present("create", "sound") {
         features.push(Feature::Sound);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("home")
-    {
+    if matcher.is_option_present("create", "home") {
         features.push(Feature::HomePersistent);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("notifications")
-    {
+    if matcher.is_option_present("create", "notifications") {
         features.push(Feature::Notification);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("timezone")
-    {
+    if matcher.is_option_present("create", "timezone") {
         features.push(Feature::Time);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("devices")
-    {
+    if matcher.is_option_present("create", "devices") {
         features.push(Feature::Devices);
     }
 
     features
 }
 
-fn get_create_package(matches: &ArgMatches) -> PathBuf {
+fn get_create_package(matcher: &CommandMatcher) -> std::io::Result<PathBuf> {
     std::fs::canonicalize(Path::new(
-        matches
-            .subcommand_matches("create")
-            .unwrap()
-            .value_of(&"package")
-            .unwrap(),
+        matcher.get_argument("create", "package").unwrap().as_str(),
     ))
-    .unwrap()
 }
 
-fn get_create_command(matches: &ArgMatches) -> Option<String> {
-    matches
-        .subcommand_matches("create")
-        .unwrap()
-        .value_of(&"command")
-        .map(|s| s.to_string())
+fn get_create_command(matcher: &CommandMatcher) -> Option<String> {
+    matcher.get_argument("create", "command")
 }
 
-fn get_create_deps(matches: &ArgMatches) -> Option<String> {
-    matches
-        .subcommand_matches("create")
-        .unwrap()
-        .value_of(&"dependencies")
-        .map(|s| s.to_string())
+fn get_create_deps(matcher: &CommandMatcher) -> Option<String> {
+    matcher.get_argument("create", "dependencies")
 }

@@ -74,6 +74,18 @@ impl Display for FeaturesList {
     }
 }
 
+/// Main structure to run application
+///
+/// # Example
+/// ```
+/// use debian_bridge_core::{App, Config, Docker, System};
+/// use std::path::Path;
+///
+/// let docker = Docker::new();
+/// let config = Config::deserialize(Path::new("./cfg")).unwrap();
+/// let system = System::try_new(&docker).unwrap();
+/// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+/// ```
 pub struct App<'a> {
     prefix: String,
     cache_path: PathBuf,
