@@ -94,7 +94,7 @@ As you can see, created program has a default package name by default.
 $ debian_bridge run rocketchat
 ```
 
-![running an application](./resources/running-example.png)
+![running an application](./assets/running-example.png)
 
 ### Removing
 

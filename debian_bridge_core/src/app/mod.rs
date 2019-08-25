@@ -77,7 +77,7 @@ impl Display for FeaturesList {
 /// Main structure to run application
 ///
 /// # Example
-/// ```
+/// ```no_run
 /// use debian_bridge_core::{App, Config, Docker, System};
 /// use std::path::Path;
 ///
@@ -85,6 +85,8 @@ impl Display for FeaturesList {
 /// let config = Config::deserialize(Path::new("./cfg")).unwrap();
 /// let system = System::try_new(&docker).unwrap();
 /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+/// //...
+/// app.save(Path::new("./cfg")).unwrap();
 /// ```
 pub struct App<'a> {
     prefix: String,
@@ -104,6 +106,20 @@ impl<'a> App<'a> {
             .to_vec()
     }
 
+    /// Removes existed program
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use debian_bridge_core::{App, Config, Docker, System};
+    /// # use std::path::Path;
+    ///
+    /// # let docker = Docker::new();
+    /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
+    /// # let system = System::try_new(&docker).unwrap();
+    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// app.remove("foo-program").unwrap();
+    /// app.save(Path::new("./cfg")).unwrap();
+    /// ```
     pub fn remove<T: Into<String>>(&mut self, program: T) -> AppResult<&Self> {
         let program = self
             .config
@@ -133,6 +149,20 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
+    /// Creates new program
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use debian_bridge_core::{App, Config, Docker, System, Feature};
+    /// # use std::path::Path;
+    ///
+    /// # let docker = Docker::new();
+    /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
+    /// # let system = System::try_new(&docker).unwrap();
+    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// app.create(Path::new("./package.deb"), &vec![Feature::Display], &None, &None, &None).unwrap();
+    /// app.save(Path::new("./cfg")).unwrap();
+    /// ```
     pub fn create(
         &mut self,
         app_path: &Path,
@@ -180,6 +210,19 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
+    /// Runs existed program
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use debian_bridge_core::{App, Config, Docker, System};
+    /// # use std::path::Path;
+    ///
+    /// # let docker = Docker::new();
+    /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
+    /// # let system = System::try_new(&docker).unwrap();
+    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// app.run("foo_program").unwrap();
+    /// ```
     pub fn run<T: Into<String>>(&self, program: T) -> AppResult<&Self> {
         let program = self
             .config
@@ -191,12 +234,37 @@ impl<'a> App<'a> {
         Ok(self)
     }
 
+    /// Saves current application configuration
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use debian_bridge_core::{App, Config, Docker, System};
+    /// # use std::path::Path;
+    ///
+    /// # let docker = Docker::new();
+    /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
+    /// # let system = System::try_new(&docker).unwrap();
+    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// app.save(Path::new("./cfg_new")).unwrap();
+    /// ```
     pub fn save(&self, path: &Path) -> AppResult<&Self> {
         self.config.serialize(path)?;
         debug!("Config updated");
         Ok(self)
     }
 
+    /// Creates new App instance
+    ///
+    /// # Example
+    /// ```no_run
+    /// # use debian_bridge_core::{App, Config, Docker, System};
+    /// # use std::path::Path;
+    ///
+    /// # let docker = Docker::new();
+    /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
+    /// # let system = System::try_new(&docker).unwrap();
+    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// ```
     pub fn new<T: Into<String>>(
         prefix: T,
         cache_path: &Path,
