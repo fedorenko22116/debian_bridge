@@ -1,5 +1,6 @@
+extern crate debian_bridge_cli;
+
 use debian_bridge_cli::start;
-use std::error::Error;
 
 fn main() {
     start(
