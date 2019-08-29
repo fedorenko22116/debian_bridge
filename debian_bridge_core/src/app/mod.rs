@@ -84,11 +84,12 @@ impl Display for FeaturesList {
 /// let docker = Docker::new();
 /// let config = Config::deserialize(Path::new("./cfg")).unwrap();
 /// let system = System::try_new(&docker).unwrap();
-/// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+/// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
 /// //...
 /// app.save(Path::new("./cfg")).unwrap();
 /// ```
 pub struct App<'a> {
+    package_name: String,
     prefix: String,
     cache_path: PathBuf,
     config: Config,
@@ -112,11 +113,11 @@ impl<'a> App<'a> {
     /// ```no_run
     /// # use debian_bridge_core::{App, Config, Docker, System};
     /// # use std::path::Path;
-    ///
+    /// #
     /// # let docker = Docker::new();
     /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
     /// # let system = System::try_new(&docker).unwrap();
-    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
     /// app.remove("foo-program").unwrap();
     /// app.save(Path::new("./cfg")).unwrap();
     /// ```
@@ -155,11 +156,11 @@ impl<'a> App<'a> {
     /// ```no_run
     /// # use debian_bridge_core::{App, Config, Docker, System, Feature};
     /// # use std::path::Path;
-    ///
+    /// #
     /// # let docker = Docker::new();
     /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
     /// # let system = System::try_new(&docker).unwrap();
-    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
     /// app.create(Path::new("./package.deb"), &vec![Feature::Display], &None, &None, &None).unwrap();
     /// app.save(Path::new("./cfg")).unwrap();
     /// ```
@@ -216,11 +217,11 @@ impl<'a> App<'a> {
     /// ```no_run
     /// # use debian_bridge_core::{App, Config, Docker, System};
     /// # use std::path::Path;
-    ///
+    /// #
     /// # let docker = Docker::new();
     /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
     /// # let system = System::try_new(&docker).unwrap();
-    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
     /// app.run("foo_program").unwrap();
     /// ```
     pub fn run<T: Into<String>>(&self, program: T) -> AppResult<&Self> {
@@ -240,11 +241,11 @@ impl<'a> App<'a> {
     /// ```no_run
     /// # use debian_bridge_core::{App, Config, Docker, System};
     /// # use std::path::Path;
-    ///
+    /// #
     /// # let docker = Docker::new();
     /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
     /// # let system = System::try_new(&docker).unwrap();
-    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
     /// app.save(Path::new("./cfg_new")).unwrap();
     /// ```
     pub fn save(&self, path: &Path) -> AppResult<&Self> {
@@ -259,22 +260,25 @@ impl<'a> App<'a> {
     /// ```no_run
     /// # use debian_bridge_core::{App, Config, Docker, System};
     /// # use std::path::Path;
-    ///
+    /// #
     /// # let docker = Docker::new();
     /// # let config = Config::deserialize(Path::new("./cfg")).unwrap();
     /// # let system = System::try_new(&docker).unwrap();
-    /// let mut app = App::new("foo_package", Path::new("./cache"), &config, &system, &docker);
+    /// let mut app = App::new("debian_bridge", "foo_package", Path::new("./cache"), &config, &system, &docker);
     /// ```
-    pub fn new<T: Into<String>>(
-        prefix: T,
+    pub fn new<T: Into<String>, S: Into<String>>(
+        package_name: T,
+        prefix: S,
         cache_path: &Path,
         config: &Config,
         system: &'a System,
         docker: &'a Docker,
     ) -> Self {
+        let package_name = package_name.into();
         let prefix = prefix.into();
 
         App {
+            package_name,
             prefix: prefix.to_owned(),
             config: config.to_owned(),
             docker: DockerFacade::new(docker, system, prefix, cache_path),
@@ -285,6 +289,7 @@ impl<'a> App<'a> {
 
     fn create_entry(&self, icon: &Icon, deb: &Deb) -> AppResult<&Self> {
         let entry = util::gen_desktop_entry(
+            &self.package_name,
             &deb.package,
             &deb.description
                 .to_owned()

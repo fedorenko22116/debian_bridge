@@ -80,3 +80,7 @@ subcommands:
             short: i
             long: devices
             help: Enable devices
+        - desktop-icon:
+            long: desktop-icon
+            takes_value: true
+            help: Set a path for a desktop icon of current application or use 'default'

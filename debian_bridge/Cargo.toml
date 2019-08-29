@@ -1,8 +1,10 @@
 [package]
 name = "debian_bridge"
-version = "0.1.0"
+description = "Bridge to run .deb packages on your distribution using docker"
+version = "1.0.0"
 authors = ["victor <fedorenko22116@gmail.com>"]
 edition = "2018"
+license = "MIT"
 default-run = "cli"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html

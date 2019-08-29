@@ -2,6 +2,7 @@
 extern crate clap;
 #[macro_use]
 extern crate log;
+extern crate pretty_env_logger;
 extern crate xdg;
 
 mod matcher;
