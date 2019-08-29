@@ -4,7 +4,7 @@
 CLI tool to automatize creation and running an applications with debian using docker.
 
 ```
-debian_bridge 0.2.1
+debian_bridge 1.0.0
 victor <fedorenko22116@gmail.com>
 
 USAGE:
@@ -77,7 +77,7 @@ $ debian_bridge create -dshnti --dependencies 'libasound2' --command 'rocketchat
 Fine, `rocketchat` application created with a shared `display`, `sound`, `notifications`, `timezone`, `devices` and `home` directory. All required dependencies for `rocketchat` were automatically installed. 
 Additional libs like `libasound2` which are not specified in .deb package can be added with `dependencies` argument. \
 By default package name will be used as a command, but it's not a case with a `rocketchat`, so command name (`rocketchat-desktop`) was additionaly passed.\
-Also a .desktop entry was created in `$HOME/Desktop` (More options will be added later)
+To automatically create a .desktop entry in `$HOME/Desktop` add `icon-desktop default` or `icon-desktop <path>` to the command
 
 ### Listing
 
@@ -94,7 +94,7 @@ As you can see, created program has a default package name by default.
 $ debian_bridge run rocketchat
 ```
 
-![running an application](./resources/running-example.png)
+![running an application](./assets/running-example.png)
 
 ### Removing
 

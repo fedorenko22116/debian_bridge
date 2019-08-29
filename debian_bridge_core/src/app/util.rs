@@ -78,9 +78,10 @@ pub fn gen_dockerfile(deb: &Deb, program: &Program) -> AppResult<String> {
         .to_string())
 }
 
-pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(
-    name: T,
-    description: S,
+pub fn gen_desktop_entry<T: Into<String>, S: Into<String>, U: Into<String>>(
+    package_name: T,
+    name: S,
+    description: U,
     icon: &Path,
 ) -> AppResult<String> {
     if !is_gnome_terminal() {
@@ -89,11 +90,11 @@ pub fn gen_desktop_entry<T: Into<String>, S: Into<String>>(
         ));
     }
 
+    let package_name = package_name.into();
     let name = name.into();
-    let package = env!("CARGO_PKG_NAME");
     let exec = format!(
         "gnome-terminal -e '{} run {}'",
-        get_package_path(package)?,
+        get_package_path(package_name.as_str())?,
         name
     );
     let description = description.into();
@@ -150,7 +151,7 @@ mod tests {
         get_package_path.mock_safe(|_| MockResult::Return(Ok("/foo".to_string())));
         is_gnome_terminal.mock_safe(|| MockResult::Return(true));
 
-        let entrypoint = gen_desktop_entry("Foo", "bar", Path::new("")).unwrap();
+        let entrypoint = gen_desktop_entry("debian_bridge", "Foo", "bar", Path::new("")).unwrap();
 
         assert_eq!(
             entrypoint,

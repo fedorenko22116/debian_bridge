@@ -1,11 +1,6 @@
-#[macro_use]
-extern crate clap;
-#[macro_use]
-extern crate log;
-extern crate xdg;
-
+use crate::CommandMatcher;
 use clap::{App, AppSettings, ArgMatches};
-use debian_bridge::{App as Wrapper, Config, Docker, Feature, Icon, Program, System};
+use debian_bridge_core::{App as Wrapper, Config, Docker, Feature, Icon, Program, System};
 use std::{
     error::Error,
     net::IpAddr,
@@ -13,15 +8,34 @@ use std::{
     str::FromStr,
 };
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let package_name = env!("CARGO_PKG_NAME").to_owned();
+pub fn start<T, S, U>(package_name: T, authors: S, version: U)
+where
+    T: Into<String>,
+    S: Into<String>,
+    U: Into<String>,
+{
+    if let Err(err) = _start(package_name, authors, version) {
+        error!("{}", err.to_string());
+    }
+}
+
+fn _start<T, S, U>(package_name: T, authors: S, version: U) -> Result<(), Box<dyn Error>>
+where
+    T: Into<String>,
+    S: Into<String>,
+    U: Into<String>,
+{
+    let package_name = package_name.into();
+    let authors = authors.into();
+    let version = version.into();
+
     let yaml = load_yaml!("../config/cli.yaml");
     let matches = App::from_yaml(yaml)
         .setting(AppSettings::ArgRequiredElseHelp)
         .setting(AppSettings::SubcommandRequiredElseHelp)
         .name(&package_name)
-        .author(env!("CARGO_PKG_AUTHORS"))
-        .version(env!("CARGO_PKG_VERSION"))
+        .author(authors.as_str())
+        .version(version.as_str())
         .get_matches();
 
     let debug_level = match matches.occurrences_of("verbose") {
@@ -48,10 +62,18 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     debug!("Cache path: {}", cache_path.to_str().unwrap());
 
+    let matcher = CommandMatcher::new(&matches);
     let docker = Docker::new();
     let config = Config::deserialize(config_path.as_path())?;
     let system = System::try_new(&docker)?;
-    let mut app = Wrapper::new(&package_name, &cache_path, &config, &system, &docker);
+    let mut app = Wrapper::new(
+        &package_name,
+        &package_name,
+        &cache_path,
+        &config,
+        &system,
+        &docker,
+    );
 
     debug!("Subcommand processing...");
 
@@ -62,11 +84,11 @@ fn main() -> Result<(), Box<dyn Error>> {
         }
         Some("create") => {
             app.create(
-                get_create_package(&matches).as_path(),
-                &get_create_features(&matches),
-                &Some(Icon::default()),
-                &get_create_command(&matches),
-                &get_create_deps(&matches),
+                get_create_package(&matcher)?.as_path(),
+                &get_create_features(&matcher),
+                &get_create_icon(&matcher),
+                &get_create_command(&matcher),
+                &get_create_deps(&matcher),
             )?;
             info!("Program successfuly created");
         }
@@ -111,83 +133,57 @@ fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn get_create_features(matches: &ArgMatches) -> Vec<Feature> {
+fn get_create_features(matcher: &CommandMatcher) -> Vec<Feature> {
     let mut features = vec![];
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("display")
-    {
+    if matcher.is_option_present("create", "display") {
         features.push(Feature::Display);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("sound")
-    {
+    if matcher.is_option_present("create", "sound") {
         features.push(Feature::Sound);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("home")
-    {
+    if matcher.is_option_present("create", "home") {
         features.push(Feature::HomePersistent);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("notifications")
-    {
+    if matcher.is_option_present("create", "notifications") {
         features.push(Feature::Notification);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("timezone")
-    {
+    if matcher.is_option_present("create", "timezone") {
         features.push(Feature::Time);
     }
 
-    if matches
-        .subcommand_matches("create")
-        .unwrap()
-        .is_present("devices")
-    {
+    if matcher.is_option_present("create", "devices") {
         features.push(Feature::Devices);
     }
 
     features
 }
 
-fn get_create_package(matches: &ArgMatches) -> PathBuf {
+fn get_create_package(matcher: &CommandMatcher) -> std::io::Result<PathBuf> {
     std::fs::canonicalize(Path::new(
-        matches
-            .subcommand_matches("create")
-            .unwrap()
-            .value_of(&"package")
-            .unwrap(),
+        matcher.get_argument("create", "package").unwrap().as_str(),
     ))
-    .unwrap()
 }
 
-fn get_create_command(matches: &ArgMatches) -> Option<String> {
-    matches
-        .subcommand_matches("create")
-        .unwrap()
-        .value_of(&"command")
-        .map(|s| s.to_string())
+fn get_create_command(matcher: &CommandMatcher) -> Option<String> {
+    matcher.get_argument("create", "command")
 }
 
-fn get_create_deps(matches: &ArgMatches) -> Option<String> {
-    matches
-        .subcommand_matches("create")
-        .unwrap()
-        .value_of(&"dependencies")
-        .map(|s| s.to_string())
+fn get_create_deps(matcher: &CommandMatcher) -> Option<String> {
+    matcher.get_argument("create", "dependencies")
+}
+
+fn get_create_icon(matcher: &CommandMatcher) -> Option<Icon> {
+    let icon_owned = matcher.get_argument("create", "desktop-icon");
+    let icon = icon_owned.as_ref().map(String::as_str);
+
+    if let Some("default") = icon {
+        return Some(Icon::default());
+    }
+
+    None
 }
