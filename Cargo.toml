@@ -1,5 +1,6 @@
 [workspace]
 members = [
     "./debian_bridge",
+    "./debian_bridge_cli",
     "./debian_bridge_core",
 ]
