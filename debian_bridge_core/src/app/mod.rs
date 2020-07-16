@@ -181,8 +181,9 @@ impl<'a> App<'a> {
         let deb = Deb::try_new(app_path)?;
         let program = Program::new(&deb.package, &app_path, &settings, &icon, &cmd, &deps);
         let mut app_tmp_path = self.cache_path.to_owned();
-        app_tmp_path.push(Path::new("tmp.deb"));
 
+        std::fs::create_dir_all(&app_tmp_path).map_err(|err| AppError::File(err.to_string()))?;
+        app_tmp_path.push(Path::new("tmp.deb"));
         std::fs::copy(app_path, &app_tmp_path).map_err(|err| AppError::File(err.to_string()))?;
 
         let mut dockerfile = util::gen_dockerfile(&deb, &program)?;
