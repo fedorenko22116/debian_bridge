@@ -5,7 +5,7 @@ version = "1.0.0"
 authors = ["victor <fedorenko22116@gmail.com>"]
 edition = "2018"
 license = "MIT"
-default-run = "cli"
+default-run = "debian_bridge"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 

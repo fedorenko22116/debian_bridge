@@ -115,7 +115,13 @@ impl Config {
     pub fn deserialize(path: &Path) -> AppResult<Self> {
         if !path.exists() {
             return File::create(path)
-                .map(|_| Config { programs: vec![] })
+                .map(|_| {
+                    let config = Config { programs: vec![] };
+
+                    config.serialize(path);
+
+                    config
+                })
                 .map_err(|err| AppError::File(err.to_string()));
         }
 
@@ -126,6 +132,10 @@ impl Config {
 
         br.read_to_string(&mut config_str)
             .map_err(|err| AppError::File(err.to_string()))?;
+
+        if config_str.is_empty() {
+            return Ok(Config { programs: vec![] })
+        }
 
         serde_json::from_str(config_str.as_str()).map_err(|err| AppError::File(err.to_string()))
     }
