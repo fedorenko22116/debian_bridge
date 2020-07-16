@@ -36,7 +36,6 @@ curl https://sh.rustup.rs -sSf | sh
 echo 'export PATH=$PATH:~/.cargo/bin' >> ~/.bashrc
 source ~/.bashrc
 ```
-* Switch to 1.38 version `rustup default 1.38.0`
 * Install `debian_bridge` with `cargo install --git https://github.com/22116/debian_bridge`
 (You might need gcc compiler to be installed. On solus you can get it by `sudo eopkg it -c system.devel` command)
 * Run `debian_bridge`

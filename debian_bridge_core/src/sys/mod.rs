@@ -55,7 +55,7 @@ impl System {
                 Some("wayland") => Some(WindowManager::Wayland),
                 _ => return None,
             })
-            .unwrap()
+            .unwrap_or(None)
     }
 
     fn get_sound_driver() -> Option<SoundDriver> {

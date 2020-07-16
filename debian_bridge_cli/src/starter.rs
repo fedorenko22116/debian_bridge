@@ -58,7 +58,7 @@ where
 
     debug!("Configuration path: {}", config_path.to_str().unwrap());
 
-    let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?.place_cache_file("")?;
+    let cache_path = xdg::BaseDirectories::with_prefix(&package_name)?.place_cache_file("Dockerfile")?;
 
     debug!("Cache path: {}", cache_path.to_str().unwrap());
 
