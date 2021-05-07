@@ -1,9 +1,6 @@
 FROM rust
 
-WORKDIR /usr/src/app
+RUN rustup toolchain install nightly
+RUN rustup component add --toolchain nightly rustfmt
 
-COPY . .
-
-RUN cargo install --path ./debian_bridge
-
-ENTRYPOINT ["debian_bridge"]
+ENTRYPOINT ["cargo"]
