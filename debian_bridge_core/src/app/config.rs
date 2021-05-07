@@ -134,7 +134,7 @@ impl Config {
             .map_err(|err| AppError::File(err.to_string()))?;
 
         if config_str.is_empty() {
-            return Ok(Config { programs: vec![] })
+            return Ok(Config { programs: vec![] });
         }
 
         serde_json::from_str(config_str.as_str()).map_err(|err| AppError::File(err.to_string()))

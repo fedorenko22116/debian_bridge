@@ -1,0 +1,8 @@
+version: '3'
+services:
+    cargo:
+        image: 'rust'
+        volumes:
+        - .:/home/app
+        working_dir: /home/app
+        entrypoint: ["cargo"]
