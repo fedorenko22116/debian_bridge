@@ -3,7 +3,7 @@
 
 ### Caution!
 
-> Author is not using non-debian distro and will not support this project in near future. Be free to create a PRs or Fork the roject at all.
+> Author is not using non-debian distro anymore and will not support this project in near future. Be free to create a PRs or Fork the project at all.
 
 
 CLI tool to automatize creation and running an applications with debian using docker.
